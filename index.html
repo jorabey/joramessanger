@@ -3,32 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <title>Jora Messenger</title>
-
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-    <meta name="googlebot" content="noindex, nofollow">
-    <meta name="yandex" content="none">
-    <meta name="bingbot" content="noindex, nofollow">
-    <meta name="referrer" content="no-referrer">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/png" href="/icon-192.png" />
     
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Jora">
-
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Jora">
     <meta name="theme-color" content="#000000">
-
-    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-
-    <link rel="apple-touch-icon" href="/icon-192.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="/icon-167.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
 
     <style>
       html, body {
@@ -37,30 +19,43 @@
         margin: 0;
         padding: 0;
         background-color: #000000;
-        /* Pull-to-refresh (tepaga tortganda yangilanish) funksiyasini butunlay o'ldiradi */
-        overscroll-behavior: none; 
-        /* Matnlarni belgilash va nusxalashni bloklaydi */
+        overscroll-behavior: none;
         -webkit-user-select: none; 
         user-select: none;
-        /* Rasm/URL larni uzoq bosganda chiqadigan tizim menyusini yo'q qiladi */
-        -webkit-touch-callout: none; 
-        /* Ekranga tekkanda chiqadigan ko'k/kulrang xiralikni tozalaydi */
+        -webkit-touch-callout: none;
         -webkit-tap-highlight-color: transparent; 
-        position: fixed;
-        overflow: hidden;
+        /* 🔴 position: fixed va overflow: hidden olib tashlandi (iOS qotmasligi uchun) */
       }
-      /* Faqat klaviatura chiqishi kerak bo'lgan joylarda matn belgilashga ruxsat */
       input, textarea {
         -webkit-user-select: auto;
         user-select: auto;
       }
     </style>
+    
+    <script>
+      window.addEventListener('error', function(e) {
+        if (e.target.tagName === 'SCRIPT' || (e.message && e.message.includes('dynamically imported module'))) {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for(let reg of regs) reg.unregister();
+              window.location.reload(true);
+            });
+          }
+        }
+      }, true);
+    </script>
   </head>
   
   <body>
-    <div id="root" class="w-full h-full relative overflow-hidden"></div>
+    <div id="root" class="w-full h-full relative"></div>
     <script>window.global = window;</script>
     <script type="module" src="/src/main.jsx"></script>
-
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>
