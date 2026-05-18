@@ -91,10 +91,15 @@ const ChatPage = () => {
     const handleResize = () => {
       if (window.visualViewport) {
         const currentHeight = window.visualViewport.height;
-        setViewportHeight(`${currentHeight}px`);
+        // 🔴 XAVFSIZLIK QOIDASI: Ekranni siqilib yo'q bo'lib ketishidan asraydi
+        if (currentHeight > 100) {
+          setViewportHeight(`${currentHeight}px`);
+        } else {
+          setViewportHeight('100dvh');
+        }
+
         if (currentHeight < lastHeight - 100) {
           dispatch(setShouldScrollToBottom(true));
-          // Klaviatura ochilganda badge'ni tozalash
           if ('clearAppBadge' in navigator) {
             navigator.clearAppBadge().catch(() => {});
             unreadCounterRef.current = 0;
@@ -140,13 +145,9 @@ const ChatPage = () => {
     if (isInit && !isAuth) navigate('/login', { replace: true });
   }, [isAuth, isInit, navigate]);
 
-  // ----------------------------------------
-  // 🔴 MA'LUMOT YUKLASH (ESKI, ISHONCHLI USUL)
-  // ----------------------------------------
   const fetchGroupData = useCallback(async () => {
     if (!GROUP_ID) return;
     
-    // Auto-retry mantiqi: Agar RLS ma'lumotni darhol bermasa, orqa fonda yana urinadi
     let retryCount = 0;
     
     const tryFetch = async () => {
@@ -162,13 +163,12 @@ const ChatPage = () => {
         if (groupRes.data) {
           setGroup(groupRes.data);
           if (membersRes.data) setMembers(membersRes.data);
-          setIsLoading(false); // Ma'lumot kelsa, loaderni o'chiradi
+          setIsLoading(false); 
         } else if (retryCount < 5) {
-          // Token kelishini kutib qayta urinish
           retryCount++;
           setTimeout(tryFetch, 600);
         } else {
-          setIsLoading(false); // Baribir o'chiradi, ekran qotib qolmasligi uchun
+          setIsLoading(false); 
         }
       } catch (err) {
         console.error(err);
@@ -179,9 +179,6 @@ const ChatPage = () => {
     tryFetch();
   }, []);
 
-  // ----------------------------------------
-  // 🔴 REALTIME VA BAZA BILAN ALOQA
-  // ----------------------------------------
   useEffect(() => {
     if (!isAuth) return;
     fetchGroupData();
@@ -204,13 +201,10 @@ const ChatPage = () => {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_members', filter: `group_id=eq.${GROUP_ID}` }, () => fetchGroupData())
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'group_members', filter: `group_id=eq.${GROUP_ID}` }, () => fetchGroupData())
       
-      // 🍏 YANGI XABAR KELGANDA BILDIRISHNOMALAR (YANGI QO'SHILGAN QISM)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         dispatch(setShouldScrollToBottom(true));
 
         if (currentUser?.id && payload.new.user_id !== currentUser.id) {
-          
-          // 1. Web Push Notification
           const showWebNotification = () => {
             if ('serviceWorker' in navigator) {
               navigator.serviceWorker.ready.then((registration) => {
@@ -228,18 +222,15 @@ const ChatPage = () => {
             showWebNotification();
           }
 
-          // 2. App Badge
           if ('setAppBadge' in navigator) {
             unreadCounterRef.current += 1;
             navigator.setAppBadge(unreadCounterRef.current).catch(() => {});
           }
 
-          // 3. Vibratsiya
           if ('vibrate' in navigator && !document.hidden) {
             navigator.vibrate(15); 
           }
 
-          // 4. Ovoz
           try {
             const audio = new Audio('/sounds/receive.mp3');
             audio.volume = 0.5;
@@ -256,9 +247,6 @@ const ChatPage = () => {
     };
   }, [isAuth, fetchGroupData, dispatch, currentUser?.id]);
 
-  // ----------------------------------------
-  // 🔴 CALL FETCHING (ESKI HOLATDA QOLDI)
-  // ----------------------------------------
   const fetchActiveCall = useCallback(async () => {
     const { data } = await supabase
       .from('active_calls')
@@ -314,9 +302,6 @@ const ChatPage = () => {
     };
   }, [isAuth, dispatch, fetchActiveCall]);
 
-  // ----------------------------------------
-  // 🔴 XABAR YUBORISH VA PUSH NOTIFICATION API
-  // ----------------------------------------
   const handleSendMessage = useCallback(async (payload) => {
     try {
       if (payload.isEdit && payload.msgId) {
@@ -331,7 +316,6 @@ const ChatPage = () => {
       
       dispatch(setShouldScrollToBottom(true));
 
-      // 🍏 NATIVE PUSH API INTEGRATION (Yangi qism)
       if (currentUser?.id) {
         const { data: memberRows } = await supabase
           .from('group_members')
@@ -366,7 +350,6 @@ const ChatPage = () => {
   }, [sendMessage, editMessage, dispatch, currentUser]);
 
 
-  // 🔴 ENG ASOSIY QISM: QORA EKRANNI YO'QOTISH MANTIQI
   if (!isInit) return <Loader fullScreen />;
   if (!isAuth) return null;
 
@@ -382,7 +365,6 @@ const ChatPage = () => {
     >
       <div className="flex flex-col flex-1 min-h-0 w-full relative pt-[env(safe-area-inset-top)]">
         
-        {/* 1. HEADER (HECH QACHON YO'QOLMAYDI) */}
         <div className="w-full shrink-0 z-50">
           <ChatHeader
             group={group || { name: 'Yuklanmoqda...' }}
@@ -393,9 +375,7 @@ const ChatPage = () => {
           />
         </div>
 
-        {/* 2. MESSAGES CONTAINER */}
         <div className="relative flex-1 min-h-0 w-full bg-[#000000] z-10 flex flex-col">
-          {/* DIQQAT: Ekranni qora qilib qo'yadigan Loader o'rniga, nafis aylanuvchi doira qo'yildi */}
           {isLoading ? (
              <div className="w-full h-full flex items-center justify-center bg-[#000000]">
                 <div className="w-8 h-8 border-2 border-[#333] border-t-[#0a84ff] rounded-full animate-spin"></div>
@@ -410,7 +390,6 @@ const ChatPage = () => {
             />
           )}
 
-          {/* Typing Indicator */}
           <AnimatePresence>
             {typingText && (
               <motion.div
@@ -438,7 +417,6 @@ const ChatPage = () => {
           </AnimatePresence>
         </div>
 
-        {/* 3. BOTTOM PANEL: CallBar va Input */}
         <div className="w-full bg-[#121214] border-t border-white/5 flex flex-col z-40 shrink-0">
           
           <AnimatePresence mode="popLayout">
@@ -468,7 +446,6 @@ const ChatPage = () => {
         </div>
       </div>
 
-      {/* OVERLAYS & FULLSCREEN MODALS */}
       <AnimatePresence>
         {recorder.isRecording && recorder.recordingType === 'video' && (
           <VideoNoteModal stream={recorder.stream} isRecording={recorder.isRecording} duration={recorder.duration} onFlip={recorder.flipCamera} />
