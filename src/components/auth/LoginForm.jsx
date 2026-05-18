@@ -72,7 +72,7 @@ const Login = () => {
 
     // Agar user adashib to'liq email yozsa ham faqat loginini ajratib olamiz
     const pureLogin = cleanUsername.includes('@') ? cleanUsername.split('@')[0] : cleanUsername;
-    const generatedEmail = `${pureLogin}@124maktab.uz`;
+    const generatedEmail = `${pureLogin}@jora.net`;
 
     try {
       // 1. PRE-AUTH REALTIME GUARD: Supabase Auth'ga so'rov ketishidan avval blokni tekshirish
