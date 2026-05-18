@@ -215,12 +215,24 @@ const AppLockWrapper = ({ children }) => {
 
 const ProtectedRoute = ({ children }) => {
   const isAuth = useSelector(selectIsAuthenticated);
+  const isInit = useSelector(selectIsInitialized);
+ 
+  // TUZATISH: initialized bo'lguncha kutamiz
+  // Avval: if (!isAuth) return <Navigate to="/login" />
+  // Muammo: isInit=false, isAuth=false → login ga yuborardi
+  // Endi: isInit bo'lguncha hech narsa ko'rsatmaymiz (AppLockWrapper loader ko'rsatadi)
+  if (!isInit) return null;
   if (!isAuth) return <Navigate to="/login" replace />;
   return children;
 };
 
+
 const PublicRoute = ({ children }) => {
   const isAuth = useSelector(selectIsAuthenticated);
+  const isInit = useSelector(selectIsInitialized);
+ 
+  // TUZATISH: initialized bo'lguncha kutamiz
+  if (!isInit) return null;
   if (isAuth) return <Navigate to="/chat" replace />;
   return children;
 };
