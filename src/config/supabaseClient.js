@@ -1,19 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
-// .env faylidan URL va KEY ni olamiz (Vite ishlatayotgan bo'lsangiz import.meta.env orqali olinadi)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Xatolikni oldini olish uchun tekshiruv (agar .env to'ldirilmagan bo'lsa konsolga yozadi)
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Diqqat: Supabase URL yoki Anon Key topilmadi! Iltimos, .env faylini tekshiring.");
+  console.error("Diqqat: Supabase URL yoki Anon Key topilmadi!");
 }
 
-// Barcha joyda ishlatish uchun supabase obyektini eksport qilamiz
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: true, // Foydalanuvchi tizimdan chiqib ketmaguncha sessiyani saqlaydi
+    persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    // TUZATISH: Mobil brauzerlarda session yo'qolmasligi uchun
+    // storage ni aniq ko'rsatamiz. Ba'zi Android/iOS brauzerlar
+    // position:fixed + overflow:hidden bo'lganda localStorage ga
+    // avtomatik kira olmaydi.
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'sb-auth-token',
   }
 });
