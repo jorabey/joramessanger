@@ -62,18 +62,5 @@
     <script>window.global = window;</script>
     <script type="module" src="/src/main.jsx"></script>
 
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(registration => {
-              console.log('🛡️ PWA Motor faol (SW Scope):', registration.scope);
-            })
-            .catch(error => {
-              console.error('PWA Motor xatosi:', error);
-            });
-        });
-      }
-    </script>
   </body>
 </html>
