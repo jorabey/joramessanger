@@ -1,6 +1,5 @@
-// App.jsx
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -28,9 +27,6 @@ const urlBase64ToUint8Array = (base64String) => {
 
 const VAPID_PUBLIC_KEY = "BKB--9KZ5l18Vf-a7f-eEeJ_AkvfTbDNlM2Sd97yw9Waqvudj0mVXcmuLCH847KCT5K2g4-taIOboye1hC7g7tA"; 
 
-// ==========================================
-// 0. NATIVE PWA INSTALL BUTTON
-// ==========================================
 const PwaInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
@@ -48,7 +44,6 @@ const PwaInstallPrompt = () => {
     deferredPrompt.prompt(); 
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      console.log('🍏 Ilova o\'rnatilmoqda!');
       setDeferredPrompt(null);
     }
   };
@@ -72,9 +67,6 @@ const PwaInstallPrompt = () => {
   );
 };
 
-// ==========================================
-// 1. QORA EKRANNI DAVOLOVCHI TOZA ANIMATSIYA
-// ==========================================
 const AnimatedPage = ({ children }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.98 }}
@@ -86,9 +78,6 @@ const AnimatedPage = ({ children }) => (
   </motion.div>
 );
 
-// ==========================================
-// 2. GLOBAL APP LOCK & REAL-TIME SECURITY
-// ==========================================
 const AppLockWrapper = ({ children }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate(); 
@@ -151,7 +140,8 @@ const AppLockWrapper = ({ children }) => {
   useEffect(() => {
     if (!currentUser?.id) return;
     const registerPushNotifications = async () => {
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
+      // 🔴 XATO DAVOLANDI: 'Notification' in window tekshiruvi qo'shildi
+      if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
         try {
           const registration = await navigator.serviceWorker.ready;
           if (Notification.permission === 'granted') {
@@ -172,7 +162,7 @@ const AppLockWrapper = ({ children }) => {
             }
           }
         } catch (err) {
-          console.error("Push sinxronizatsiyasida xatolik:", err);
+          console.error("Push xatosi:", err);
         }
       }
     };
@@ -181,11 +171,8 @@ const AppLockWrapper = ({ children }) => {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('app_theme') || 'dark';
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   }, []);
 
   useEffect(() => {
@@ -199,24 +186,6 @@ const AppLockWrapper = ({ children }) => {
 
   return (
     <div className="w-full h-full relative bg-[#000000] select-none">
-      <style>{`
-        *, *::before, *::after {
-          -webkit-user-select: none !important;
-          -moz-user-select: none !important;
-          -ms-user-select: none !important;
-          user-select: none !important;
-          -webkit-touch-callout: none !important;
-        }
-        input, textarea {
-          -webkit-user-select: text !important;
-          -moz-user-select: text !important;
-          -ms-user-select: text !important;
-          user-select: text !important;
-        }
-        img, video { pointer-events: none; }
-        button, [role="button"] { pointer-events: auto; }
-      `}</style>
-
       <div className={`w-full h-full flex flex-col ${shouldShowLock ? 'pointer-events-none blur-sm opacity-40 scale-[0.98]' : 'opacity-100 scale-100'} transition-all duration-300 ease-out`}>
         {children}
         <PwaInstallPrompt />
@@ -244,9 +213,6 @@ const AppLockWrapper = ({ children }) => {
   );
 };
 
-// ==========================================
-// 3. SECURE & PUBLIC NAVIGATION ROUTES
-// ==========================================
 const ProtectedRoute = ({ children }) => {
   const isAuth = useSelector(selectIsAuthenticated);
   if (!isAuth) return <Navigate to="/login" replace />;
@@ -259,17 +225,12 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// ==========================================
-// 4. MAIN ROUTING ENGINE
-// ==========================================
 const AppRoutes = () => {
-  const location = useLocation();
   useAuth(); 
 
   useEffect(() => {
     const goOnline = () => { toast.success("Tarmoqqa qayta ulandi", { id: 'net-status' }); };
-    const goOffline = () => { toast.error("Internet aloqasi uzildi. Ulanish kutilmoqda...", { id: 'net-status', duration: Infinity }); };
-
+    const goOffline = () => { toast.error("Internet aloqasi uzildi...", { id: 'net-status', duration: Infinity }); };
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     return () => {
@@ -281,8 +242,8 @@ const AppRoutes = () => {
   return (
     <AppLockWrapper>
       <div className="w-full h-[100dvh] bg-[#000000] overflow-hidden relative">
-        {/* 🔴 AnimatePresence Butunlay olib tashlandi - Qora ekran o'limini yechimi shunda! */}
-        <Routes location={location} key={location.pathname}>
+        {/* 🔴 XATO DAVOLANDI: "location={location} key={location.pathname}" Olib tashlandi (sahifa uzilib tushmaydi) */}
+        <Routes>
           <Route path="/" element={<Navigate to="/chat" replace />} />
           <Route path="/login" element={<PublicRoute><AnimatedPage><Login /></AnimatedPage></PublicRoute>} />
           <Route path="/chat" element={<ProtectedRoute><AnimatedPage><ChatPage /></AnimatedPage></ProtectedRoute>} />
@@ -293,22 +254,18 @@ const AppRoutes = () => {
   );
 };
 
-// ==========================================
-// 5. GLOBAL ROOT WRAPPER
-// ==========================================
 const App = () => {
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
+    // 🔴 XATO DAVOLANDI: iOS da Notification obyekti yo'qligi hisobga olindi
+    if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
       navigator.serviceWorker.register('/sw.js')
         .then(function (registration) {
           if (Notification.permission === 'default') {
             Notification.requestPermission().then(permission => {
-              if (permission === 'granted') {
-                console.log('🍏 Bildirishnomalarga ruxsat berildi!');
-              }
+              if (permission === 'granted') console.log('Bildirishnomalarga ruxsat berildi!');
             });
           }
-        }).catch(err => console.error('Service Worker ulanmadi:', err));
+        }).catch(err => console.error('SW xatosi:', err));
     }
   }, []);
 
