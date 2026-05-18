@@ -1,16 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { setUser } from '../../redux/authSlice'; // O'zingizning redux actioningiz
-import { ArrowRight, Loader2, ShieldCheck,Eye,EyeOff,Network } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Loader2, Eye, EyeOff, Network } from 'lucide-react';
 import { supabase } from '../../config/supabaseClient';
 import toast from 'react-hot-toast';
 
 const Login = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -19,15 +13,20 @@ const Login = () => {
 
   const passwordRef = useRef(null);
 
-  // ==========================================
-  // 🔴 KLAVIATURA CHIQGANDA EKRAN SAKRASHINI DAVOLASH
-  // ==========================================
+  // ----------------------------------------
+  // 🔴 1-XATOLIK DAVOLANDI: Ekran Nolga aylanishi himoyasi
+  // ----------------------------------------
   useEffect(() => {
     const handleResize = () => {
       if (window.visualViewport) {
-        // Klaviatura ochilganda oynani aynan ochiq maydon o'lchamiga tenglaydi
-        setViewportHeight(`${window.visualViewport.height}px`);
-        window.scrollTo(0, 0); // iOS dagi sahifa siljib ketishini to'xtatadi
+        const currentHeight = window.visualViewport.height;
+        // XAVFSIZLIK: Balandlik 100px dan kichiklashib (yoki 0) bo'lib qolsa uni qutqaramiz
+        if (currentHeight > 100) {
+          setViewportHeight(`${currentHeight}px`);
+        } else {
+          setViewportHeight('100dvh');
+        }
+        window.scrollTo(0, 0); 
       } else {
         setViewportHeight(`${window.innerHeight}px`);
       }
@@ -59,9 +58,6 @@ const Login = () => {
     }
   };
 
-  // ==========================================
-  // 🔴 TOZA LOGIN VA FAOL BLOK TEKSHIRUVI
-  // ==========================================
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     
@@ -70,12 +66,10 @@ const Login = () => {
 
     setLoading(true);
 
-    // Agar user adashib to'liq email yozsa ham faqat loginini ajratib olamiz
     const pureLogin = cleanUsername.includes('@') ? cleanUsername.split('@')[0] : cleanUsername;
     const generatedEmail = `${pureLogin}@jora.net`;
 
     try {
-      // 1. PRE-AUTH REALTIME GUARD: Supabase Auth'ga so'rov ketishidan avval blokni tekshirish
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_blocked')
@@ -85,10 +79,9 @@ const Login = () => {
       if (profile && profile.is_blocked === true) {
         toast.error("Ushbu akkaunt administrator tomonidan bloklangan!");
         setLoading(false);
-        return; // 🛑 BLOK: Tizimga umuman kiritmaymiz
+        return; 
       }
 
-      // 2. SUPABASE AUTH SIGN IN (Parol cheklovlarisiz toza kirish)
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: generatedEmail,
         password: password,
@@ -97,9 +90,9 @@ const Login = () => {
       if (authError) throw authError;
 
       if (authData?.user) {
-        dispatch(setUser({ user: authData.user, session: authData.session }));
+        // 🔴 2-XATOLIK DAVOLANDI: dispatch va navigate olib tashlandi
+        // App.jsx va useAuth.js bu ishlarni orqa fonda juda toza o'zi bajaradi
         toast.success("Xush kelibsiz!");
-        navigate('/chat', { replace: true });
       }
 
     } catch (err) {
@@ -112,9 +105,8 @@ const Login = () => {
   return (
     <div 
       className="fixed inset-0 w-full flex flex-col md:flex-row bg-[#000000] overflow-hidden select-none"
-      style={{ height: viewportHeight }} // 🔴 Klaviatura hisobiga dynamic moslashuvchi balandlik
+      style={{ height: viewportHeight }} 
     >
-      {/* CHAP TOMON: BRANDING GRAPHIC SIDE (Faqat kompyuter va planshetda ko'rinadi) */}
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-b from-[#0a0a0c] to-[#000000] items-center justify-center border-r border-white/[0.04] relative">
         <div className="absolute top-[-20%] left-[-10%] w-[50dvw] h-[50dvw] bg-[#007aff]/10 blur-[130px] rounded-full pointer-events-none" />
         <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="text-center z-10">
@@ -128,20 +120,15 @@ const Login = () => {
         </motion.div>
       </div>
 
-      {/* O'NG TOMON: LOGIN CONTROL CENTER (Asosiy Oyna) */}
       <div className="flex-1 flex flex-col bg-black relative h-full">
-        
-        {/* APPLE UNIFIED BAR */}
         <header className="h-14 flex items-center justify-between px-6 border-b border-white/[0.04] bg-black/40 backdrop-blur-3xl shrink-0 z-30">
           <span className="text-[15px] font-black text-white tracking-widest uppercase flex items-center gap-2">
             JORA ID <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
           </span>
         </header>
 
-        {/* COMPONENT BODY */}
         <main className="flex-1 flex flex-col justify-center px-6 sm:px-16 md:px-20 relative overflow-y-auto custom-scrollbar">
           <div className="max-w-[360px] w-full mx-auto py-8">
-            
             <motion.div 
               initial={{ opacity: 0, x: -16, scale: 0.98 }} 
               animate={{ opacity: 1, x: 0, scale: 1 }} 
@@ -154,10 +141,7 @@ const Login = () => {
               </header>
 
               <div className="space-y-5">
-                {/* APPLE STYLED COMPACT CONTAINER (Inputlar Bloki) */}
                 <div className="rounded-2xl border border-white/[0.05] overflow-hidden bg-[#161618]/40 backdrop-blur-2xl shadow-inner">
-                  
-                  {/* USERNAME FIELD */}
                   <div className="relative border-b border-white/[0.04] flex items-center group">
                     <input 
                       type="text" 
@@ -174,7 +158,6 @@ const Login = () => {
                     </span>
                   </div>
 
-                  {/* PASSWORD FIELD */}
                   <div className="relative flex items-center">
                     <input 
                       ref={passwordRef}
@@ -195,7 +178,6 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* PREMIUM QALIN TUGMA (Siz yuborgan loyihadagi kabi qalin va baquvvat h-14) */}
                 <motion.button 
                   whileTap={{ scale: 0.97 }}
                   disabled={loading}
@@ -210,11 +192,9 @@ const Login = () => {
                 </motion.button>
               </div>
             </motion.div>
-
           </div>
         </main>
 
-        {/* FOOTER AREA (Xavfsizlik belgisi va pastki qism) */}
         <footer className="pb-8 pt-4 px-6 shrink-0 flex flex-col items-center gap-4 select-none">
           <div className="flex items-center gap-2 text-[10px] text-slate-600 font-black uppercase tracking-widest bg-white/[0.01] px-4 py-1.5 rounded-full border border-white/[0.03]">
             <Network size={13} className="text-emerald-500" />
