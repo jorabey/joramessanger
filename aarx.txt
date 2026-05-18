@@ -1,0 +1,162 @@
+-- 1. Avtomatik yangilanish funksiyasi (updated_at uchun)
+CREATE OR REPLACE FUNCTION update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- ==========================================
+-- 2. FOYDALANUVCHILAR PROFILI
+-- ==========================================
+CREATE TABLE profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL, -- login@124maktab.uz
+    first_name TEXT,
+    last_name TEXT,
+    avatar_url TEXT,
+    dob DATE, -- Tug'ilgan sana
+    gender TEXT CHECK (gender IN ('erkak', 'ayol', 'boshqa')),
+    bio TEXT,
+    theme TEXT DEFAULT 'light', -- dark yoki light
+    social_links JSONB DEFAULT '{"instagram": "", "telegram": "", "youtube": "", "other": ""}'::jsonb,
+    is_blocked BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+CREATE TRIGGER update_profiles_modtime BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+-- ==========================================
+-- 3. GURUH VA UNING GLOBAL SOZLAMALARI
+-- ==========================================
+-- Garchi bitta guruh bo'lsa ham, alohida jadval qilish kelajakda kengaytirishga yordam beradi
+CREATE TABLE groups (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '124-Maktab Sinfdoshlari',
+    description TEXT,
+    avatar_url TEXT,
+    -- Global ruxsatlar (Guruh sozlamalaridan boshqariladi)
+    allow_messages BOOLEAN DEFAULT true,
+    allow_files BOOLEAN DEFAULT true,
+    allow_audio BOOLEAN DEFAULT true,
+    allow_video BOOLEAN DEFAULT true,
+    allow_voice_notes BOOLEAN DEFAULT true,
+    allow_video_notes BOOLEAN DEFAULT true,
+    allow_reactions BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+CREATE TRIGGER update_groups_modtime BEFORE UPDATE ON groups FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+-- ==========================================
+-- 4. GURUH A'ZOLARI VA INDIVIDUAL RUXSATLAR (PERMISSIONS)
+-- ==========================================
+-- Ega (Owner), Admin, va Oddiy User larni ajratamiz va ruxsatlarini beramiz
+CREATE TABLE group_members (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    role TEXT CHECK (role IN ('owner', 'admin', 'user')) DEFAULT 'user',
+    
+    -- Individual ruxsatlar (Agar global ruxsat true bo'lsayu, bunda false bo'lsa, foydalanuvchi yoza olmaydi)
+    can_send_messages BOOLEAN DEFAULT true,
+    can_send_media BOOLEAN DEFAULT true, -- Rasm, Video, Fayl
+    can_send_voice_video_notes BOOLEAN DEFAULT true, -- Ovozli va Yumaloq video
+    can_react BOOLEAN DEFAULT true,
+    can_see_viewers BOOLEAN DEFAULT true, -- Ko'rganlarni ko'rish ruxsati
+    
+    -- Admin huquqlari (Faqat owner yoki katta adminlar beradi)
+    can_delete_others_messages BOOLEAN DEFAULT false,
+    can_edit_group_info BOOLEAN DEFAULT false, -- Faqat rasm/nomini o'zgartirish
+    can_manage_group_settings BOOLEAN DEFAULT false, -- Ruxsatlarni boshqarish
+    can_block_users BOOLEAN DEFAULT false,
+    
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    UNIQUE(group_id, user_id)
+);
+
+
+-- ==========================================
+-- 5. XABARLAR JADVALI (MESSAGES)
+-- ==========================================
+CREATE TABLE messages (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE SET NULL, -- User o'chib ketsa ham xabar qolishi uchun
+    
+    content TEXT, -- Matnli xabar
+    
+    -- Xabar turi (Telegram kabi ajratamiz)
+    message_type TEXT CHECK (message_type IN ('text', 'image', 'video', 'audio', 'voice_note', 'video_note', 'file', 'link')) DEFAULT 'text',
+    
+    -- Media ma'lumotlari
+    file_url TEXT,
+    file_name TEXT,
+    file_size BIGINT,
+    mime_type TEXT, -- Masalan: audio/mp4, application/pdf
+    duration INTEGER, -- Audio, Voice note yoki Video uchun (sekundda)
+    
+    -- Havolalar (Links) uchun maxsus ma'lumotlar (Chiroyli preview qilish uchun)
+    link_metadata JSONB, -- { "title": "...", "description": "...", "image_url": "...", "url": "..." }
+    
+    reply_to_id UUID REFERENCES messages(id) ON DELETE SET NULL,
+    
+    is_edited BOOLEAN DEFAULT false,
+    
+    -- TOMBSTONE (O'chirilgan xabarlar arxitekturasi)
+    is_deleted_for_all BOOLEAN DEFAULT false,
+    deleted_by UUID REFERENCES profiles(id) ON DELETE SET NULL, -- Kim o'chirgani saqlanadi
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+CREATE TRIGGER update_messages_modtime BEFORE UPDATE ON messages FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+-- ==========================================
+-- 6. XABARNI O'QIGANLAR (VIEWERS)
+-- ==========================================
+-- Kim, qaysi xabarni, qachon ko'rganini saqlaydi (Read receipts)
+CREATE TABLE message_reads (
+    message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    read_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    PRIMARY KEY (message_id, user_id)
+);
+
+-- ==========================================
+-- 7. REAKSIYALAR (REACTIONS)
+-- ==========================================
+-- Bir nechta reaksiya bosa olishi uchun
+CREATE TABLE message_reactions (
+    message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    reaction TEXT NOT NULL, -- '👍', '❤️', '😂' va hokazo
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    PRIMARY KEY (message_id, user_id, reaction)
+);
+
+
+-- ==========================================
+-- 8. JONLI CHATLAR (VOICE/VIDEO CALLS)
+-- ==========================================
+CREATE TABLE active_calls (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    group_id UUID REFERENCES groups(id) ON DELETE CASCADE,
+    started_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    is_active BOOLEAN DEFAULT true,
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    ended_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Qo'ng'iroq ishtirokchilari (Kim kirdi, kim chiqdi, kimning mikrofoni/kamerasi yoniq)
+CREATE TABLE call_participants (
+    call_id UUID REFERENCES active_calls(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    is_muted BOOLEAN DEFAULT true,
+    is_video_on BOOLEAN DEFAULT false,
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    left_at TIMESTAMP WITH TIME ZONE,
+    PRIMARY KEY (call_id, user_id)
+);

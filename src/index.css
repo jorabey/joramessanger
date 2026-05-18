@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+
+@layer base {
+  body {
+    @apply antialiased text-[#1d1d1f] bg-[#f5f5f7];
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  }
+}
+
+.apple-glass {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(25px) saturate(190%);
+  -webkit-backdrop-filter: blur(25px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .apple-glass {
+  background: rgba(28, 28, 30, 0.75);
+  backdrop-filter: blur(25px) saturate(190%);
+  -webkit-backdrop-filter: blur(25px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+@layer components {
+  .apple-squircle {
+    border-radius: 44px; /* iOS burchagi */
+  }
+  @media (min-width: 768px) {
+    .apple-squircle {
+      border-radius: 32px; /* macOS/iPadOS burchagi */
+    }
+  }
+  
+  .ios-blur {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  .dark .ios-blur {
+    background: rgba(28, 28, 30, 0.8);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+}
+
+
+@layer base {
+  /* Brauzerning fokusdagi ko'k ramkasini butunlay yo'qotish */
+  input:focus, button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Avtotoldirishdagi sariq fonni yo'qotish */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f5f5f7;
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Brauzerning default tooltip (required) xabarlarini yashirish */
+  input:invalid {
+    box-shadow: none;
+  }
+}
+
+/* Neytral "Oled Gray" foni */
+.neutral-bg {
+  background-color: #1c1c1e; /* Na qora, na oq - o'ta chuqur kulrang */
+}
+
+@layer base {
+  html, body {
+    /* Skrollni butunlay to'xtatish */
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    /* Double tap zoomni o'chirish */
+    touch-action: manipulation;
+    /* Matnni tanlashni o'chirish (ilova kabi bo'lishi uchun) */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input, textarea {
+    /* Faqat input ichida matn tanlashga ruxsat */
+    -webkit-user-select: text;
+    user-select: text;
+    /* Zoom bo'lmasligi uchun minimum 16px-17px */
+    font-size: 17px !important; 
+  }
+
+  /* Fokus bo'lganda ko'k ramka chiqmasligi uchun */
+  *:focus {
+    outline: none !important;
+  }
+}
+
+
+@layer base {
+  html, body {
+    /* Zoomni oldini olish va scrollni o'chirish */
+    touch-action: none;
+    -webkit-text-size-adjust: none;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Chat ro'yxati uchun scroll */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    /* Faqat vertical scrollga ruxsat */
+    overflow-y: scroll;
+    touch-action: pan-y;
+  }
+
+  /* iOS safe area (IPhone chekkalari uchun) */
+  .safe-area-inset {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden; /* Ekranning o'zi umuman scroll bo'lmasligi kerak */
+  background-color: #000000;
+  color: #ffffff;
+  
+  /* Native his qilish uchun eng muhim qoidalar */
+  overscroll-behavior: none; /* iOS da tepaga/pastga tortganda oq fon chiqib ketishini to'sadi (Bounce effect) */
+  -webkit-font-smoothing: antialiased; /* Shriftlarni Mac/iOS dagi kabi tiniq qiladi */
+  -webkit-tap-highlight-color: transparent; /* Tugmalarni bosganda xunuk ko'k fon chiqishini o'chiradi */
+  user-select: none; /* UI elementlarni tasodifan belgilab (copy qilib) olishni to'sadi */
+  touch-action: pan-x pan-y; /* Zoom va g'alati qimirlashlarni to'sadi */
+}
+
+/* Faqat xabarlar va kerakli matnlarni nusxalashga ruxsat beramiz */
+input, textarea, p, span {
+  user-select: text;
+}
+
+/* ==========================================
+   MINIMALIST iOS SCROLLBAR (Ko'rinmas yoki juda ingichka)
+   ========================================== */
+
+/* 1. Butun loyiha bo'ylab standart scrollni yashirish */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+/* 2. Faqat .custom-scrollbar klassi berilgan joylarda (Chat list, Sidebar) minimalist scroll chiqadi */
+.custom-scrollbar {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin; /* Firefox uchun */
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px; /* Juda ingichka, nafis chiziq */
+  height: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15); /* Yengil shaffof oq */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3); /* Usti bosilganda sal yorqinlashadi */
+}
