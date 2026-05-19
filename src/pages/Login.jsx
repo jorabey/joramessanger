@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { selectIsAuthenticated, selectIsInitialized } from '../redux/authSlice';
 import LoginForm from '../components/auth/LoginForm';
-import Loader   from './components/ui/Loader';
+import Loader   from '../components/ui/Loader';
 
 const Login = () => {
   const navigate = useNavigate();
