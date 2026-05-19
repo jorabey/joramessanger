@@ -10,22 +10,15 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
-        
-        // 🌟 ASOSIY O'ZGARISH: Har qanday yangi linkka kirilganda index.html ochilishi shart!
         navigateFallback: "/index.html",
-        
-        // Sitemap va API larga aralashmaydi
         navigateFallbackDenylist: [/^\/sitemap\.xml$/, /^\/api\//], 
 
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.destination === "image",
             handler: "CacheFirst",
-          },
-          {
-            urlPattern: /^https:\/\/vzyoxwqydcxbpuf\.supabase\.co\/.*/i,
-            handler: "NetworkFirst",
-          },
+          }
+          // 🔴 DIQQAT: Supabase URL bu yerdan olib tashlandi! (Login ga otib yuborishning asosiy sababi shu edi)
         ],
       },
     }),
