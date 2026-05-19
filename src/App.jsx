@@ -179,7 +179,7 @@ const AppLockWrapper = ({ children }) => {
     if (!currentUser) setIsUnlocked(false);
   }, [currentUser]);
 
-  if (!isInit) return <Loader fullScreen />;
+  if (!isInit) return <Loader fullScreen={true} />;
 
   const hasPasscode = Boolean(currentUser?.app_passcode);
   const shouldShowLock = currentUser && hasPasscode && !isUnlocked;
