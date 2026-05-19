@@ -397,9 +397,7 @@ const ChatPage = () => {
         <div className="relative flex-1 min-h-0 w-full bg-[#000000] z-10 flex flex-col">
           {/* DIQQAT: Ekranni qora qilib qo'yadigan Loader o'rniga, nafis aylanuvchi doira qo'yildi */}
           {isLoading ? (
-             <div className="w-full h-full flex items-center justify-center bg-[#000000]">
-                <div className="w-8 h-8 border-2 border-[#333] border-t-[#0a84ff] rounded-full animate-spin"></div>
-             </div>
+             <Loader fullScreen={true} />
           ) : (
             <MessageList 
               onLoadMore={fetchMoreMessages}
