@@ -250,43 +250,48 @@ const ChatPage = () => {
 
 
   const fetchGroupData = useCallback(async () => {
-
-    if (!GROUP_ID) return;
-
-    try {
-
-      const [groupRes, membersRes] = await Promise.all([
-
-        supabase.from('groups').select('*').eq('id', GROUP_ID).maybeSingle(),
-
-        supabase
-
-          .from('group_members')
-
-          .select('*, profiles:user_id(id, first_name, last_name, avatar_url, email, bio, is_blocked)')
-
-          .eq('group_id', GROUP_ID),
-
-      ]);
-
-
-      if (groupRes.data) setGroup(groupRes.data);
-
-      if (membersRes.data) setMembers(membersRes.data);
-
-    } catch (err) {
-
-      console.error(err);
-
-    } finally {
-
-      setIsLoading(false);
-
+    if (!GROUP_ID) {
+      setIsLoading(false); // 🟢 Kichik xato to'g'irlandi (guruh id yo'q bo'lsa loader osilib qolmasligi uchun)
+      return;
     }
 
-  }, []);
+    let retryCount = 0;
 
+    const tryFetch = async () => {
+      try {
+        const [groupRes, membersRes] = await Promise.all([
+          supabase.from('groups').select('*').eq('id', GROUP_ID).maybeSingle(),
+          supabase
+            .from('group_members')
+            .select('*, profiles:user_id(...)')
+            .eq('group_id', GROUP_ID),
+        ]);
 
+        if (groupRes.data) {
+          setGroup(groupRes.data);
+          if (membersRes.data) setMembers(membersRes.data);
+          setIsLoading(false);
+        } else if (retryCount < 5) {
+          retryCount++;
+          setTimeout(tryFetch, 600);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error(err);
+        setIsLoading(false);
+      }
+    };
+
+    tryFetch();
+
+    // 🟢 ChatPage loaderi osilib qolishiga qarshi 5 soniyalik himoya
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+
+  }, [GROUP_ID]); // DEPENDENCY QO'SHILDI
+ 
   useEffect(() => {
 
     if (!isAuth) return;
