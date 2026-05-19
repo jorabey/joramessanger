@@ -2,36 +2,28 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const Loader = ({ fullScreen = false }) => {
-  // Ranglar ketma-ketligi: 3 ta ko'k, 1 ta yashil
-  const colors = ["bg-blue-900", "bg-blue-600", "bg-blue-400", "bg-green-500"];
+  // Ranglar: 3 ta ko'k (to'qdan ochga), 1 ta yashil
+  const colors = ["bg-blue-900", "bg-blue-700", "bg-blue-400", "bg-green-500"];
 
+  // Tashqi konteyner aylanadi
   const containerVariants = {
     animate: {
       rotate: 360,
-      transition: {
-        repeat: Infinity,
-        duration: 2,
-        ease: "linear"
-      }
+      transition: { repeat: Infinity, duration: 2, ease: "linear" }
     }
   };
 
+  // Har bir nuqtaning nafas olish (pulsatsiya) animatsiyasi
   const dotVariants = {
     animate: {
-      scale: [1, 1.4, 1], // Pulsatsiya
+      scale: [1, 1.4, 1],
       opacity: [0.6, 1, 0.6],
     }
   };
 
-  const dotTransition = {
-    duration: 0.8,
-    repeat: Infinity,
-    ease: "easeInOut",
-  };
-
   const LoaderContent = (
     <motion.div 
-      className="relative w-12 h-12"
+      className="relative w-12 h-12 flex items-center justify-center"
       variants={containerVariants}
       animate="animate"
     >
@@ -40,15 +32,21 @@ const Loader = ({ fullScreen = false }) => {
           key={i}
           className={`absolute w-3 h-3 ${colors[i]} rounded-full`}
           style={{
-            // Nuqtalarni 4 ta burchakka joylash
-            top: i === 0 || i === 1 ? '0' : 'auto',
-            bottom: i === 2 || i === 3 ? '0' : 'auto',
-            left: i === 0 || i === 3 ? '0' : 'auto',
-            right: i === 1 || i === 2 ? '0' : 'auto',
+            // 4 nuqtani soat strelkasi bo'yicha joylashtirish
+            top: i === 0 ? '0%' : i === 2 ? 'auto' : '50%',
+            bottom: i === 2 ? '0%' : 'auto',
+            left: i === 3 ? '0%' : i === 1 ? 'auto' : '50%',
+            right: i === 1 ? '0%' : 'auto',
+            transform: 'translate(-50%, -50%)'
           }}
           variants={dotVariants}
           animate="animate"
-          transition={{ ...dotTransition, delay: i * 0.2 }}
+          transition={{ 
+            duration: 1, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: i * 0.25 // Harakatning ketma-ketligi (bir-birini quvishi uchun)
+          }}
         />
       ))}
     </motion.div>
