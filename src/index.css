@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bu kod butun ilovadagi barcha Loader komponentlarini o'ldiradi, 
+   agar u 'fixed' (fullScreen) bo'lmasa. */
+   
+.animate-spin:not(.fixed), 
+.animate-bounce:not(.fixed),
+div[class*="border-t"]:not(.fixed) {
+    display: none !important;
+}
+
+/* Agar loader'da 'fixed' klassi bo'lsa, uni asrab qoladi */
+.fixed {
+    display: flex !important;
+}
+
 
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
