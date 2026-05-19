@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { selectIsAuthenticated, selectIsInitialized } from '../redux/authSlice';
 import LoginForm from '../components/auth/LoginForm';
-import { Spinner } from '../components/ui/Loader';
+import { Loader } from '../components/ui/Loader';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const Login = () => {
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             className="w-16 h-16 bg-blue-500/20 rounded-3xl blur-xl absolute"
           />
-          <Spinner size="lg" className="text-blue-500 relative z-10" />
+          <Loader fullScreen={true} />
         </motion.div>
       ) : !isAuth ? (
         <motion.div
