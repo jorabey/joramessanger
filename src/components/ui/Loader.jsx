@@ -2,39 +2,39 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const Loader = ({ fullScreen = false }) => {
-  // Samsung One UI uchun "yengil" pulsatsiya animatsiyasi
+  // Nuqtalar harakati uchun variantlar
   const dotVariants = {
     animate: {
-      scale: [0.8, 1.4, 0.8], // Nuqtalar kattalashib-kichrayadi
-      opacity: [0.4, 1, 0.4], // Yorqinlik o'zgaradi
+      scale: [1, 1.2, 1], // Pulsatsiya
+      opacity: [0.5, 1, 0.5],
+      y: [0, -6, 0], // Yuqoriga ko'tarilib tushish effekti
     }
   };
 
   const dotTransition = {
-    duration: 0.9, // Biroz sekinroq va yumshoqroq
+    duration: 0.8,
     repeat: Infinity,
     ease: "easeInOut",
   };
 
   const Dots = (
-    <div className="flex gap-1.5 items-center justify-center">
-      {[0, 1, 2].map((i) => (
+    <div className="flex gap-2 items-center justify-center">
+      {[0, 1, 2, 3].map((i) => (
         <motion.div
           key={i}
           variants={dotVariants}
           animate="animate"
-          // delay: i * 0.15 bu Samsungdagi o'sha "to'lqin" effektini beradi
+          // delayni 0.15 ga qo'ydik, shunda ular "bir-birini quvib" harakatlanadi
           transition={{ ...dotTransition, delay: i * 0.15 }} 
-          className="w-2.5 h-2.5 bg-white/90 rounded-full"
+          className="w-2.5 h-2.5 bg-white rounded-full"
         />
       ))}
     </div>
   );
 
-  // Fullscreen rejimida ekran markaziga joylash
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-[99999] bg-[#000000] flex items-center justify-center pointer-events-none">
+      <div className="fixed inset-0 z-[99999] bg-[#000000] flex items-center justify-center">
         {Dots}
       </div>
     );
