@@ -2,44 +2,44 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const Loader = ({ fullScreen = false }) => {
-  // Samsung dot animatsiyasi uchun sozlamalar
+  // Samsung One UI uchun "yengil" pulsatsiya animatsiyasi
   const dotVariants = {
     animate: {
-      scale: [0.5, 1.2, 0.5], // Kichrayib, kattalashadi
-      opacity: [0.3, 1, 0.3], // Xiralashib, yorqinlashadi
+      scale: [0.8, 1.4, 0.8], // Nuqtalar kattalashib-kichrayadi
+      opacity: [0.4, 1, 0.4], // Yorqinlik o'zgaradi
     }
   };
 
   const dotTransition = {
-    duration: 0.8,
+    duration: 0.9, // Biroz sekinroq va yumshoqroq
     repeat: Infinity,
     ease: "easeInOut",
   };
 
   const Dots = (
-    <div className="flex gap-2 items-center justify-center">
+    <div className="flex gap-1.5 items-center justify-center">
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
           variants={dotVariants}
           animate="animate"
-          transition={{ ...dotTransition, delay: i * 0.2 }} // Bir-biridan keyin kelishi
-          className="w-3 h-3 bg-white rounded-full"
+          // delay: i * 0.15 bu Samsungdagi o'sha "to'lqin" effektini beradi
+          transition={{ ...dotTransition, delay: i * 0.15 }} 
+          className="w-2.5 h-2.5 bg-white/90 rounded-full"
         />
       ))}
     </div>
   );
 
-  // Fullscreen bo'lsa ekran markaziga qo'yadi
+  // Fullscreen rejimida ekran markaziga joylash
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-[99999] bg-[#000000] flex items-center justify-center">
+      <div className="fixed inset-0 z-[99999] bg-[#000000] flex items-center justify-center pointer-events-none">
         {Dots}
       </div>
     );
   }
 
-  // Oddiy holat (button yoki chat ichi)
   return Dots;
 };
 
