@@ -117,7 +117,7 @@ const GroupSidebar = ({ isOpen, onClose, group: initialGroup, members = [], onli
 
               {/* Tabs Section */}
               <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-white/5 p-1 flex gap-1">
-                {TABS.map(({ id, Icon }) => (
+                {TABS.map(({ id, Icon,label }) => (
                   <button 
                     key={id} 
                     onClick={() => setActiveTab(id)}
