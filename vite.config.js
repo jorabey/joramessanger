@@ -4,18 +4,19 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   build: {
+    // Agar manualChunks xato berayotgan bo'lsa, uni olib tashlang
+    // yoki faqat juda katta fayllarni ajrating:
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          // Kutubxonalarni alohida chunk (fayl) qilib ajratamiz
-          if (id.includes('node_modules')) {
-            if (id.includes('framer-motion')) return 'vendor-framer';
-            if (id.includes('@supabase')) return 'vendor-supabase';
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
-            return 'vendor'; 
-          }
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js']
+          // vendor'ni bitta qilib qoldiramiz, custom funksiyani olib tashlang
         }
       }
+    },
+    commonjsOptions: {
+      transformMixedEsModules: true, // ES va CommonJS aralash qatlamlarni to'g'irlaydi
     }
   }
 });
