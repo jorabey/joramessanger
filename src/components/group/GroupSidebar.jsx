@@ -124,7 +124,7 @@ const GroupSidebar = ({ isOpen, onClose, group: initialGroup, members = [], onli
                     className={`flex-1 flex flex-col items-center py-3 text-[11px] font-bold uppercase tracking-wider transition-all ${activeTab === id ? 'text-[#007aff]' : 'text-white/40'}`}
                   >
                     <Icon size={20} className="mb-1" />
-                    {id === 'members' ? 'A\'zolar' : label}
+                    {id === 'members' ? 'A\'zolar' : id}
                   </button>
                 ))}
               </div>
