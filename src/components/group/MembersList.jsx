@@ -363,7 +363,7 @@ const MembersList = ({ members: initialMembers = [] }) => {
   }, [selectedUserId, localMembers, isUserOnline]);
 
   return (
-    <div className="flex flex-col h-full relative z-[51]">
+    <div className="flex flex-col h-full relative z-[999]">
       {/* QIDIRUV (SEARCH) - Xavfsiz z-index */}
       <div className="px-4 pt-4 pb-3 sticky top-0 bg-[#121214]/80 backdrop-blur-xl z-[0] border-b border-transparent shadow-sm">
         <div className="flex items-center gap-2 bg-white/10 focus-within:bg-white/15 focus-within:ring-2 ring-[#007aff]/50 rounded-[14px] px-3.5 py-2.5 transition-all shadow-inner">
