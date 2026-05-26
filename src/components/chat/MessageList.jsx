@@ -24,6 +24,7 @@ import VoiceNoteBubble from './bubbles/VoiceNoteBubble';
 import VideoBubble from './bubbles/VideoBubble';
 import VideoNoteBubble from './bubbles/VideoNoteBubble';
 import FileBubble from './bubbles/FileBubble';
+import ImageBubble from './bubbles/ImageBubble';
 import UserProfileModal from '../profile/UserProfileModal';
 
 const DateDivider = memo(({ date }) => {
@@ -52,6 +53,7 @@ const BUBBLE_COMPONENTS = {
   video: VideoBubble,
   video_note: VideoNoteBubble,
   file: FileBubble,
+  image: ImageBubble,
 };
 
 const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead }) => {
