@@ -1,9 +1,11 @@
+import React from 'react';
 import BaseBubble from './BaseBubble';
-import LinkPreview from './LinkPreview'; 
+import LinkPreview from '../LinkPreview'; 
 
 const linkifyText = (text) => {
   if (!text) return null;
 
+  // URL'larni aniqlash uchun regex
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = text.split(urlRegex);
 
@@ -16,8 +18,10 @@ const linkifyText = (text) => {
           href={part}
           target="_blank"
           rel="noopener noreferrer"
-          className="underline underline-offset-2 opacity-80 hover:opacity-100 break-all"
+          className="text-[#59aeff] underline underline-offset-2 hover:text-[#7bbfff] break-all transition-colors"
           onClick={(e) => e.stopPropagation()}
+          // Linkni bosganda ham nusxalash menyusi chiqmasligi uchun
+          style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
         >
           {part}
         </a>
@@ -27,31 +31,42 @@ const linkifyText = (text) => {
   });
 };
 
-// ==========================================
-// ASOSIY KOMPONENT (Aynan shu yerda xato bor edi)
-// ==========================================
-// DIQQAT: Biz endi hamma funksiyalarni (props) orqali to'liq qabul qilyapmiz!
 const TextBubble = (props) => {
-  const { message } = props; // Xabarni ajratib olamiz
+  const { message } = props;
   const isLink = message?.message_type === 'link';
 
   return (
-    // {...props} orqali MessageList'dan kelgan hamma narsa BaseBubble'ga o'tib ketadi!
-    <BaseBubble {...props}>
-      <div className="px-3 pt-2 pb-0">
-        {/* Asosiy matn */}
-        {message.content && (
-          <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words text-white">
-            {linkifyText(message.content)}
-          </p>
-        )}
+    // Anti-copy uchun inline uslublar:
+    // WebkitUserSelect - Safari va Chrome mobilda
+    // userSelect - standart usul
+    // WebkitTouchCallout - bosib turganda chiqadigan "Copy/Share" menyuni o'chiradi
+    <div
+      style={{
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+        WebkitTouchCallout: 'none',
+        WebkitTapHighlightColor: 'transparent'
+      }}
+      className="select-none"
+    >
+      <BaseBubble {...props}>
+        <div className="px-3.5 py-2.5">
+          {/* Asosiy matn */}
+          {message.content && (
+            <p className="text-[15px] leading-[1.4] whitespace-pre-wrap break-words text-white font-normal">
+              {linkifyText(message.content)}
+            </p>
+          )}
 
-        {/* Link preview */}
-        {isLink && message.link_metadata && (
-          <LinkPreview metadata={message.link_metadata} />
-        )}
-      </div>
-    </BaseBubble>
+          {/* Link preview */}
+          {isLink && message.link_metadata && (
+            <div className="mt-2">
+              <LinkPreview metadata={message.link_metadata} />
+            </div>
+          )}
+        </div>
+      </BaseBubble>
+    </div>
   );
 };
 
