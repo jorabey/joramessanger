@@ -58,23 +58,33 @@ const ChatInput = ({ onSend, recorder, onTyping, groupSettings }) => {
     }
   }, [editingMessage]);
 
-  const handleSend = () => {
-    if ((!text.trim() && !file) || !currentUser) return;
-    
-    onSend({
-      content: text.trim() || null,
-      messageType: file ? 'file' : 'text',
-      file: file,
-      isEdit: !!editingMessage,
-      msgId: editingMessage?.id
-    });
-    
-    setText('');
-    setFile(null);
-    dispatch(clearReplyTo());
-    dispatch(clearEditingMessage());
-    if (textareaRef.current) textareaRef.current.style.height = '46px';
-  };
+  // ChatInput.jsx ichida
+const handleSend = () => {
+  if ((!text.trim() && !file) || !currentUser) return;
+  
+  // Fayl turini aniqlash
+  let msgType = 'text';
+  if (file) {
+    if (file.type.startsWith('image/')) msgType = 'image';
+    else if (file.type.startsWith('video/')) msgType = 'video';
+    else if (file.type.startsWith('audio/')) msgType = 'audio';
+    else msgType = 'file'; // Oddiy hujjatlar uchun
+  }
+  
+  onSend({
+    content: text.trim() || null,
+    messageType: msgType, // Endi bu 'image', 'video' yoki 'audio' bo'ladi
+    file: file,
+    isEdit: !!editingMessage,
+    msgId: editingMessage?.id
+  });
+  
+  setText('');
+  setFile(null);
+  dispatch(clearReplyTo());
+  dispatch(clearEditingMessage());
+  if (textareaRef.current) textareaRef.current.style.height = '46px';
+};
 
   const onMediaPointerDown = (e) => {
     if (text.trim() || editingMessage || file || !canSendVoiceVideo) return;
