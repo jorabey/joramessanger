@@ -23,6 +23,7 @@ const TABS = [
   { id: 'files', label: 'Fayllar', Icon: FileText },
   { id: 'links', label: 'Havolalar', Icon: Link2 },
   { id: 'voice', label: 'Ovoz/Video', Icon: Mic },
+  { id: 'settings', label: 'Sozlamalar', Icon: Settings },
 ];
 
 const GroupSidebar = ({ isOpen, onClose, group: initialGroup, members = [], onlineCount = 0 }) => {
