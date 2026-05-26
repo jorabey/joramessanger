@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* src/index.css */
+* {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Faqat kerakli joylarda matn tanlashga ruxsat berish mumkin, 
+   lekin bizga umuman kerak emas */
+
 
 
 
