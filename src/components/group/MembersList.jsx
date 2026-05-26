@@ -230,7 +230,7 @@ const MemberRow = ({
     <>
       <div 
         onClick={() => onSelectUser(member.user_id)}
-        className={`flex z-[52] items-center gap-3 px-3 py-2.5 rounded-2xl transition-all cursor-pointer ${isBlocked ? 'opacity-60 grayscale-[50%]' : 'hover:bg-white/5 active:scale-[0.98]'}`}
+        className={`flex z-[0] items-center gap-3 px-3 py-2.5 rounded-2xl transition-all cursor-pointer ${isBlocked ? 'opacity-60 grayscale-[50%]' : 'hover:bg-white/5 active:scale-[0.98]'}`}
       >
         <div className="shrink-0 relative">
           <Avatar src={profile?.avatar_url} firstName={profile?.first_name} lastName={profile?.last_name} userId={member.user_id} size="md" />
@@ -363,9 +363,9 @@ const MembersList = ({ members: initialMembers = [] }) => {
   }, [selectedUserId, localMembers, isUserOnline]);
 
   return (
-    <div className="flex flex-col h-full relative z-[999]">
+    <div className="flex flex-col h-full relative z-[51]">
       {/* QIDIRUV (SEARCH) - Xavfsiz z-index */}
-      <div className="px-4 pt-4 pb-3 sticky top-0 bg-[#121214]/80 backdrop-blur-xl z-[0] border-b border-transparent shadow-sm">
+      <div className="px-4 pt-4 pb-3 sticky top-0 bg-[#121214]/80 backdrop-blur-xl z-[999] border-b border-transparent shadow-sm">
         <div className="flex items-center gap-2 bg-white/10 focus-within:bg-white/15 focus-within:ring-2 ring-[#007aff]/50 rounded-[14px] px-3.5 py-2.5 transition-all shadow-inner">
           <Search size={18} className="text-slate-400 shrink-0" />
           <input
