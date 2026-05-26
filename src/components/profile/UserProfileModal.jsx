@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  Send, Link2, ShieldAlert, X, UserCheck, UserX, Instagram, Youtube, Calendar
+  Send, Link2, ShieldAlert, X, UserCheck, UserX, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../config/supabaseClient';
@@ -276,9 +276,9 @@ const UserProfileModal = ({ isOpen, onClose, user, role = 'user', isOnline = fal
                     <div className="flex flex-col gap-3">
                       <span className="text-[12px] text-white/40 font-bold uppercase tracking-wider px-2">Ijtimoiy tarmoqlar</span>
                       <div className="flex flex-wrap gap-3">
-                        {insta && <SocialLink href={`https://instagram.com/${insta.replace('@', '')}`} icon={Instagram} colorCls="hover:text-pink-500 hover:border-pink-500/30" />}
+                        {insta && <SocialLink href={`https://instagram.com/${insta.replace('@', '')}`} icon={Link2} colorCls="hover:text-pink-500 hover:border-pink-500/30" />}
                         {tg && <SocialLink href={`https://t.me/${tg.replace('@', '')}`} icon={Send} colorCls="hover:text-[#34B7F1] hover:border-[#34B7F1]/30" />}
-                        {yt && <SocialLink href={`https://youtube.com/${yt}`} icon={Youtube} colorCls="hover:text-red-500 hover:border-red-500/30" />}
+                        {yt && <SocialLink href={`https://youtube.com/${yt}`} icon={Link2} colorCls="hover:text-red-500 hover:border-red-500/30" />}
                         {oth && <SocialLink href={oth} icon={Link2} colorCls="hover:text-emerald-400 hover:border-emerald-400/30" />}
                       </div>
                     </div>
