@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  Send, Link2, ShieldAlert, X, UserCheck, UserX, Info
+  Send, Link2, ShieldAlert, X, UserCheck, UserX, Instagram, Youtube, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../config/supabaseClient';
@@ -9,30 +9,44 @@ import Button from '../ui/Button';
 import { selectUser } from '../../redux/authSlice';
 import { usePermissions } from '../../hooks/usePermissions';
 
-// Universal yosh hisoblagich
+// 🟢 MUKAMMAL YOSH HISOBLAGICH
 const calcAge = (dob) => {
   if (!dob) return null;
   const birthDate = new Date(dob);
   if (isNaN(birthDate.getTime())) return null;
-  const diff = Date.now() - birthDate.getTime();
-  return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age > 0 ? age : null;
+};
+
+// 🟢 JSONB MA'LUMOTLARNI XAVFSIZ O'QISH
+const parseSocials = (socials) => {
+  if (!socials) return {};
+  if (typeof socials === 'string') {
+    try { return JSON.parse(socials); } catch { return {}; }
+  }
+  return socials;
 };
 
 const RoleBadge = ({ role }) => {
   const map = {
-    owner: { label: 'Asoschi', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-    admin: { label: 'Admin', color: 'bg-[#007aff]/10 text-[#007aff] border-[#007aff]/20' },
-    user:  { label: 'A\'zo',  color: 'bg-white/5 text-slate-300 border-white/10' },
+    owner: { label: 'Asoschi', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+    admin: { label: 'Admin', color: 'bg-[#007aff]/15 text-[#007aff] border-[#007aff]/30' },
+    user:  { label: 'A\'zo',  color: 'bg-white/10 text-white/70 border-white/10' },
   };
   const r = map[role] ?? map.user;
   return (
-    <span className={`text-[12px] font-bold px-2.5 py-1 rounded-lg border uppercase tracking-wider ${r.color}`}>
+    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-[8px] border uppercase tracking-widest ${r.color}`}>
       {r.label}
     </span>
   );
 };
 
-const SocialLink = ({ href, icon: Icon, label, color }) => {
+const SocialLink = ({ href, icon: Icon, label, colorCls }) => {
   if (!href) return null;
   return (
     <a
@@ -40,9 +54,9 @@ const SocialLink = ({ href, icon: Icon, label, color }) => {
       target="_blank"
       rel="noopener noreferrer"
       title={label}
-      className={`flex items-center justify-center w-[46px] h-[46px] rounded-full bg-white/5 hover:bg-white/10 transition-all duration-300 text-slate-300 ${color} group active:scale-95`}
+      className={`flex items-center justify-center w-[48px] h-[48px] rounded-full bg-[#2c2c2e] border border-white/5 shadow-sm hover:scale-105 transition-all duration-300 text-white/80 group active:scale-90 ${colorCls}`}
     >
-      <Icon size={22} className="transition-transform group-hover:scale-110" />
+      <Icon size={22} className="transition-transform group-hover:scale-110" strokeWidth={2} />
     </a>
   );
 };
@@ -54,7 +68,7 @@ const FullscreenViewer = ({ src, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-black/95 backdrop-blur-md"
+      className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl"
       onClick={onClose}
     >
       <motion.div
@@ -74,14 +88,14 @@ const FullscreenViewer = ({ src, onClose }) => {
         <img
           src={src}
           alt="To'liq rasm"
-          className="max-w-full max-h-[85vh] object-contain rounded-2xl pointer-events-none select-none"
+          className="max-w-full max-h-[85dvh] object-contain rounded-[24px] pointer-events-none select-none shadow-2xl"
         />
       </motion.div>
 
       <motion.button 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white/70 hover:text-white hover:bg-white/20 transition-all active:scale-90"
+        className="absolute top-6 right-6 p-3.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all active:scale-90 backdrop-blur-md"
         onClick={onClose}
       >
         <X size={24} />
@@ -114,16 +128,16 @@ const UserProfileModal = ({ isOpen, onClose, user, role = 'user', isOnline = fal
   const fullName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || 'Foydalanuvchi';
   const displayInitial = user.first_name ? user.first_name[0] : (user.email ? user.email[0].toUpperCase() : '?');
   
-  // Universal ma'lumot qidiruv (qanday yozilgan bo'lsa ham topadi)
-  const age = calcAge(user.dob || user.date_of_birth || user.birth_date);
-  
-  const instagram = user.instagram || user.social_links?.instagram;
-  const telegram = user.telegram || user.social_links?.telegram || user.telegram_username;
-  const youtube = user.youtube || user.social_links?.youtube;
-  const otherLink = user.other_link || user.website || user.social_links?.other;
-  const hasSocials = instagram || telegram || youtube || otherLink;
+  // 🟢 MA'LUMOTLARNI TARTIBGA SOLISH
+  const age = calcAge(user.dob);
+  const sLinks = parseSocials(user.social_links);
+  const insta = sLinks.instagram?.trim();
+  const tg = sLinks.telegram?.trim();
+  const yt = sLinks.youtube?.trim();
+  const oth = sLinks.other?.trim();
+  const hasSocials = insta || tg || yt || oth;
 
-  // Keshdan qochish uchun
+  // Rasm keshi muammosini oldini olish
   const avatarUrl = user.avatar_url ? `${user.avatar_url}${user.avatar_url.includes('?') ? '&' : '?'}v=${new Date(user.updated_at || Date.now()).getTime()}` : null;
 
   const handleToggleBlock = async () => {
@@ -148,127 +162,131 @@ const UserProfileModal = ({ isOpen, onClose, user, role = 'user', isOnline = fal
     <>
       <AnimatePresence>
         {isOpen && !showFullImage && (
-          <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4 overflow-hidden">
+          <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden">
             
+            {/* Fonni xiralashtirish */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              transition={{ duration: 0.25 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-[4px]"
               onClick={handleCloseModal} 
             />
 
+            {/* Asosiy Modal Oynasi */}
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320, mass: 0.8 }}
               drag="y"
               dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={0.2}
+              dragElastic={0.15}
               onDragEnd={(e, info) => {
-                if (info.offset.y > 100 || info.velocity.y > 400) handleCloseModal();
+                if (info.offset.y > 80 || info.velocity.y > 300) handleCloseModal();
               }}
-              className="relative w-full sm:max-w-[420px] rounded-t-[24px] sm:rounded-[24px] overflow-hidden bg-[#1c1c1e] shadow-[0_-10px_50px_rgba(0,0,0,0.5)] flex flex-col max-h-[90vh]"
+              className="relative w-full sm:max-w-[420px] rounded-t-[28px] sm:rounded-[28px] overflow-hidden bg-[#1c1c1e] shadow-[0_-20px_60px_rgba(0,0,0,0.6)] flex flex-col max-h-[90dvh] sm:max-h-[85vh]"
               onClick={(e) => e.stopPropagation()} 
             >
-              {/* Tepadan tortish chizig'i */}
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/30 rounded-full z-50 pointer-events-none" />
+              {/* Tepadagi chiziqcha (Drag indicator) */}
+              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-white/40 rounded-full z-50 pointer-events-none" />
 
-              {/* Tepadagi yopish tugmasi */}
+              {/* Yopish tugmasi */}
               <button
                 onClick={handleCloseModal}
-                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/30 text-white hover:bg-black/50 backdrop-blur-md transition-all active:scale-90"
+                className="absolute top-3.5 right-3.5 z-50 p-2 rounded-full bg-black/40 text-white/90 hover:bg-black/70 backdrop-blur-md transition-all active:scale-90"
               >
-                <X size={18} strokeWidth={2.5} />
+                <X size={20} strokeWidth={2.5} />
               </button>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar relative pb-8">
+              {/* 🟢 SCROLL BO'LADIGAN QISM (Mobilda qirqilmasligi uchun paddinglar qo'shildi) */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative flex flex-col pb-safe">
                 
-                {/* 🟢 TELEGRAM USLUBIDAGI YARIM EKRAN RASM */}
+                {/* 🟢 YARIM EKRAN RASM */}
                 <div 
-                  className={`relative w-full h-[340px] sm:h-[380px] shrink-0 ${avatarUrl ? 'cursor-pointer' : ''}`}
+                  className={`relative w-full h-[360px] sm:h-[400px] shrink-0 bg-[#2c2c2e] ${avatarUrl ? 'cursor-pointer active:opacity-90' : ''}`}
                   onClick={() => { if (avatarUrl) setShowFullImage(true); }}
                 >
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt="Cover" className="w-full h-full object-cover" />
+                    <img src={avatarUrl} alt="Cover" className="w-full h-full object-cover select-none" />
                   ) : (
                     <div 
-                      className="w-full h-full flex items-center justify-center"
-                      style={{ background: `linear-gradient(135deg, hsl(${(user.id?.charCodeAt(0) ?? 0) % 360}deg 80% 45%) 0%, hsl(${((user.id?.charCodeAt(0) ?? 0) + 60) % 360}deg 70% 20%) 100%)` }}
+                      className="w-full h-full flex items-center justify-center select-none"
+                      style={{ background: `linear-gradient(135deg, hsl(${(user.id?.charCodeAt(0) ?? 0) % 360}deg 80% 40%) 0%, hsl(${((user.id?.charCodeAt(0) ?? 0) + 60) % 360}deg 70% 15%) 100%)` }}
                     >
-                      <span className="text-[100px] font-bold text-white/80">{displayInitial}</span>
+                      <span className="text-[110px] font-bold text-white/70 tracking-tighter">{displayInitial}</span>
                     </div>
                   )}
 
-                  {/* Gradient Blur effekti (Rasm va Ismni birlashtirish) */}
+                  {/* Gradient (Silliq o'tish uchun) */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1c1c1e] via-[#1c1c1e]/40 to-transparent pointer-events-none" />
 
-                  {/* Ism va status rasmni pastida */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5 pb-4 pointer-events-none">
-                    <h2 className="text-[28px] font-bold text-white tracking-tight drop-shadow-md leading-none mb-1.5">
+                  {/* Ism va status */}
+                  <div className="absolute bottom-0 left-0 right-0 px-6 pb-5 pointer-events-none">
+                    <h2 className="text-[32px] font-extrabold text-white tracking-tight drop-shadow-lg leading-tight mb-1">
                       {fullName}
                     </h2>
-                    <p className={`text-[15px] font-medium drop-shadow-md ${isOnline ? 'text-emerald-400' : 'text-white/60'}`}>
-                      {isOnline ? 'Online' : 'Yaqinda kirdi'}
+                    <p className={`text-[15px] font-semibold drop-shadow-md tracking-wide ${isOnline ? 'text-emerald-400' : 'text-white/50'}`}>
+                      {isOnline ? 'Onlayn' : 'Yaqinda kirdi'}
                     </p>
                   </div>
                 </div>
 
-                {/* 🟢 BIO VA MA'LUMOTLAR QISMI (Toza dizayn) */}
-                <div className="px-5 pt-3 flex flex-col gap-6">
+                {/* 🟢 BIO VA BOSHQA MA'LUMOTLAR */}
+                <div className="px-6 pt-2 pb-10 flex flex-col gap-6">
                   
-                  {/* Bio */}
-                  <div>
-                    <p className="text-[16px] text-white/95 leading-relaxed font-normal whitespace-pre-wrap">
-                      {user.bio || <span className="italic text-white/30">Ma'lumot kiritilmagan</span>}
+                  {/* Bio qismi */}
+                  <div className="bg-[#2c2c2e]/50 rounded-[20px] p-4.5 border border-white/5">
+                    <span className="text-[12px] text-[#007aff] font-bold block mb-1.5 uppercase tracking-wider">O'zi haqida</span>
+                    <p className="text-[16px] text-white/95 leading-relaxed font-medium whitespace-pre-wrap">
+                      {user.bio || <span className="italic text-white/30 font-normal">Ma'lumot yo'q</span>}
                     </p>
-                    <span className="text-[13px] text-white/40 font-medium block mt-1 uppercase tracking-wide">Haqida</span>
                   </div>
 
-                  <div className="w-full h-px bg-white/5" /> {/* Divider */}
+                  {/* Username va Yosh qismi */}
+                  <div className="bg-[#2c2c2e]/50 rounded-[20px] p-4.5 border border-white/5 flex flex-col gap-4">
+                    
+                    <div>
+                      <span className="text-[12px] text-[#007aff] font-bold block mb-1 uppercase tracking-wider">Foydalanuvchi nomi</span>
+                      <p className="text-[16px] text-white/95 font-medium break-all">
+                        {user.email || '@username'}
+                      </p>
+                    </div>
 
-                  {/* Detallar (Yosh, Usernam, Rol) */}
-                  <div className="flex flex-col gap-4">
+                    <div className="w-full h-px bg-white/5" />
+
                     <div className="flex items-center gap-3 flex-wrap">
                       <RoleBadge role={role} />
                       {age && (
-                        <span className="bg-white/5 text-white/80 text-[13px] font-medium px-3 py-1.5 rounded-lg border border-white/5">
-                          {age} yosh
+                        <span className="flex items-center gap-1.5 bg-white/5 text-white/80 text-[12px] font-bold px-3 py-1 rounded-[8px] border border-white/5">
+                          <Calendar size={14} /> {age} YOSH
                         </span>
                       )}
                       {isBlocked && (
-                        <span className="bg-red-500/10 text-red-400 text-[13px] font-medium px-3 py-1.5 rounded-lg border border-red-500/10 flex items-center gap-1.5">
-                          <ShieldAlert size={14} /> Bloklangan
+                        <span className="flex items-center gap-1.5 bg-red-500/10 text-red-400 text-[12px] font-bold px-3 py-1 rounded-[8px] border border-red-500/10">
+                          <ShieldAlert size={14} /> BLOKLANGAN
                         </span>
                       )}
                     </div>
-
-                    <div>
-                      <p className="text-[16px] text-white/90 font-medium">
-                        {user.email || '@username'}
-                      </p>
-                      <span className="text-[13px] text-white/40 font-medium block mt-1 uppercase tracking-wide">Foydalanuvchi nomi</span>
-                    </div>
                   </div>
 
-                  {/* Ijtimoiy tarmoqlar */}
+                  {/* 🟢 IJTIMOIY TARMOQLAR KO'RINISHI */}
                   {hasSocials && (
-                    <>
-                      <div className="w-full h-px bg-white/5" />
+                    <div className="flex flex-col gap-3">
+                      <span className="text-[12px] text-white/40 font-bold uppercase tracking-wider px-2">Ijtimoiy tarmoqlar</span>
                       <div className="flex flex-wrap gap-3">
-                        {instagram && <SocialLink href={`https://instagram.com/${instagram.replace('@', '')}`} icon={Link2} color="hover:text-pink-500" />}
-                        {telegram && <SocialLink href={`https://t.me/${telegram.replace('@', '')}`} icon={Send} color="hover:text-[#34B7F1]" />}
-                        {youtube && <SocialLink href={`https://youtube.com/${youtube}`} icon={Link2} color="hover:text-red-500" />}
-                        {otherLink && <SocialLink href={otherLink} icon={Link2} color="hover:text-emerald-400" />}
+                        {insta && <SocialLink href={`https://instagram.com/${insta.replace('@', '')}`} icon={Instagram} colorCls="hover:text-pink-500 hover:border-pink-500/30" />}
+                        {tg && <SocialLink href={`https://t.me/${tg.replace('@', '')}`} icon={Send} colorCls="hover:text-[#34B7F1] hover:border-[#34B7F1]/30" />}
+                        {yt && <SocialLink href={`https://youtube.com/${yt}`} icon={Youtube} colorCls="hover:text-red-500 hover:border-red-500/30" />}
+                        {oth && <SocialLink href={oth} icon={Link2} colorCls="hover:text-emerald-400 hover:border-emerald-400/30" />}
                       </div>
-                    </>
+                    </div>
                   )}
 
-                  {/* Tugma */}
+                  {/* Bloklash tugmasi */}
                   {canBlock && (
-                    <div className="mt-2">
+                    <div className="pt-2">
                       <Button
                         variant={isBlocked ? 'secondary' : 'danger'}
                         size="lg"
@@ -276,20 +294,23 @@ const UserProfileModal = ({ isOpen, onClose, user, role = 'user', isOnline = fal
                         isLoading={isBlocking}
                         leftIcon={isBlocked ? <UserCheck size={20} /> : <UserX size={20} />}
                         onClick={handleToggleBlock}
-                        className="rounded-2xl font-semibold text-[16px] py-4"
+                        className="rounded-[18px] font-bold text-[16px] py-4 shadow-lg active:scale-[0.98] transition-transform"
                       >
                         {isBlocked ? 'Blokdan chiqarish' : 'Foydalanuvchini bloklash'}
                       </Button>
                     </div>
                   )}
-                </div>
 
+                  {/* Mobilda eng pastdagi bo'sh joy */}
+                  <div className="h-6 w-full shrink-0" />
+                </div>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
+      {/* 🟢 TO'LIQ EKRAN RASM */}
       <AnimatePresence>
         {showFullImage && avatarUrl && (
           <FullscreenViewer src={avatarUrl} onClose={() => setShowFullImage(false)} />
