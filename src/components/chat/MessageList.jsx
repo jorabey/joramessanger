@@ -34,7 +34,7 @@ const DateDivider = memo(({ date }) => {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center py-4 my-2 select-none w-full clear-both"
+      className="flex flex-col items-center justify-center py-4 my-2 select-none w-full clear-both pointer-events-none"
     >
       <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest bg-white/5 px-3.5 py-1 rounded-full backdrop-blur-md">
         {label}
@@ -117,19 +117,20 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
 
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
     
+    // Qayta renderlarni oldini olish uchun faqat o'zgargandagina state'ni yangilaymiz
     if (distanceFromBottom > 250) {
-        isUserScrollingRef.current = true;
-        setShowScrollBtn(true);
+      isUserScrollingRef.current = true;
+      if (!showScrollBtn) setShowScrollBtn(true);
     } else {
-        isUserScrollingRef.current = false;
-        setShowScrollBtn(false);
+      isUserScrollingRef.current = false;
+      if (showScrollBtn) setShowScrollBtn(false);
     }
 
     if (el.scrollTop < 150 && !isLoadingMore && hasMoreMessages) {
       prevScrollHeightRef.current = el.scrollHeight;
       if (onLoadMore) onLoadMore();
     }
-  }, [isLoadingMore, hasMoreMessages, onLoadMore]);
+  }, [isLoadingMore, hasMoreMessages, onLoadMore, showScrollBtn]);
 
   useLayoutEffect(() => {
     if (!isLoadingMore && prevScrollHeightRef.current) {
@@ -160,6 +161,15 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
     if (navigator.vibrate) navigator.vibrate(20);
   }, [dispatch]);
 
+  // TEZLIK UCHUN OPTIMIZATSIYA: Members massivini O(1) xeshlash xaritasiga aylantiramiz
+  const membersMap = useMemo(() => {
+    const map = {};
+    members.forEach(m => {
+      map[m.user_id] = m;
+    });
+    return map;
+  }, [members]);
+
   const groupedItems = useMemo(() => {
     if (!Array.isArray(messages)) return [];
 
@@ -178,7 +188,6 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
       const prevMsg = filteredMessages[index - 1];
       const prevMsgDate = prevMsg ? new Date(prevMsg.created_at || Date.now()) : null;
 
-      // Sana ajratgichi
       if (!prevMsgDate || !isSameDay(msgDate, prevMsgDate)) {
         items.push({ 
           type: 'date_separator', 
@@ -191,21 +200,20 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
       let showName = true;
       const nextMsg = filteredMessages[index + 1];
       
-      // Xabarlar guruhlanganda ism va avatar ko'rinish mantiqi (iMessage style)
       if (prevMsg?.user_id === msg.user_id && prevMsgDate && isSameDay(msgDate, prevMsgDate)) {
           showName = false;
       }
       if (nextMsg?.user_id === msg.user_id && isSameDay(new Date(nextMsg.created_at || Date.now()), msgDate)) {
-          showAvatar = false; // Keyingi xabar ham shu odamniki bo'lsa, avatar yashiriladi. Ya'ni oxirgi xabarda chiqadi (items-end bilan).
+          showAvatar = false; 
       }
 
-      // 🔴 REAL-TIME: Eng yangi profilni members array dan qidiramiz
-      const memberInfo = members.find(m => m.user_id === msg.user_id);
+      // O(1) tezlikda topamiz (eski sekin `.find()` o'rniga)
+      const memberInfo = membersMap[msg.user_id];
       const realTimeProfile = memberInfo?.profiles || msg.profiles;
       
       const realTimeMsg = {
         ...msg,
-        profiles: realTimeProfile // Eskirgan ma'lumotni yangisiga almashtiramiz
+        profiles: realTimeProfile 
       };
 
       items.push({ 
@@ -220,12 +228,11 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
     });
 
     return items;
-  }, [messages, searchQuery, currentUser, members]);
+  }, [messages, searchQuery, currentUser, membersMap]);
 
-  // Profil modalining real-time yangilanishi uchun tanlangan userni ham sinxronlaymiz
   useEffect(() => {
     if (selectedUser) {
-      const updatedMember = members.find(m => m.user_id === selectedUser.id);
+      const updatedMember = membersMap[selectedUser.id];
       if (updatedMember && updatedMember.profiles) {
         setSelectedUser({
           ...updatedMember.profiles,
@@ -235,14 +242,25 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
         });
       }
     }
-  }, [members]);
+  }, [membersMap, selectedUser]);
 
   if (isLoading) {
     return <Loader fullScreen text="Xabarlar yuklanmoqda..." />; 
   }
 
   return (
-    <div className="relative flex-1 min-h-0 bg-[#000000]" style={{ WebkitTapHighlightColor: 'transparent' }}>
+    // ANTI-COPY: Barcha matnni nusxalash va select qilishni butunlay yopish
+    <div 
+      className="relative flex-1 min-h-0 bg-[#000000] select-none" 
+      style={{ 
+        WebkitTapHighlightColor: 'transparent',
+        WebkitTouchCallout: 'none', 
+        WebkitUserSelect: 'none',
+        userSelect: 'none'
+      }}
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+    >
       <div
         ref={listRef}
         onScroll={handleScroll}
@@ -250,7 +268,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
         style={{ WebkitOverflowScrolling: 'touch' }} 
       >
         {isLoadingMore && (
-          <div className="flex justify-center py-4 w-full">
+          <div className="flex justify-center py-4 w-full pointer-events-none">
             <Loader2 className="animate-spin text-[#007aff]" size={24} />
           </div>
         )}
@@ -259,7 +277,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center h-full gap-4 py-16 opacity-60 flex-1"
+            className="flex flex-col items-center justify-center h-full gap-4 py-16 opacity-60 flex-1 pointer-events-none"
           >
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center shadow-inner">
               <MessageSquareOff size={32} className="text-white/40" />
@@ -282,14 +300,13 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
 
           const msg = item.data;
           
-          // 🔴 O'chirilgan xabarlar holati
           if (msg.is_deleted_for_all) {
             return (
               <motion.div 
                 key={msg.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className={`flex w-full ${item.isOwn ? 'justify-end' : 'justify-start'} ${item.showAvatar ? 'mb-3' : 'mb-1'}`}
+                className={`flex w-full ${item.isOwn ? 'justify-end' : 'justify-start'} ${item.showAvatar ? 'mb-3' : 'mb-1'} pointer-events-none`}
               >
                 <div className={`px-3 py-1.5 rounded-[14px] text-[12px] font-medium flex items-center gap-1.5 border ${item.isOwn ? 'bg-white/5 text-white/40 border-white/5' : 'bg-white/5 text-white/40 border-white/5'}`}>
                   <Ban size={12} className="opacity-60" /> Xabar o'chirildi
@@ -349,7 +366,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
                     onScrollToMessage={scrollToMessage}
                   />
                   {isPending && item.isOwn && (
-                    <div className="absolute -right-5 bottom-1.5 flex items-center justify-center w-[18px] h-[18px] bg-black/60 rounded-full backdrop-blur-sm shadow-sm">
+                    <div className="absolute -right-5 bottom-1.5 flex items-center justify-center w-[18px] h-[18px] bg-black/60 rounded-full backdrop-blur-sm shadow-sm pointer-events-none">
                       <Clock size={10} className="text-white/80" />
                     </div>
                   )}
@@ -361,7 +378,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0, opacity: 0 }}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 shrink-0 mb-1"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 shrink-0 mb-1 pointer-events-none"
                     >
                       <Reply size={16} className="text-white" />
                     </motion.div>
