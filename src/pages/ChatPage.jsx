@@ -1,427 +1,485 @@
-import React, { useEffect, useRef, useCallback, useState, useMemo, memo, useLayoutEffect } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { isToday, isYesterday, format, isSameDay } from 'date-fns';
-import { uz } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowDown, MessageSquareOff, Loader2, Clock, Reply, Ban } from 'lucide-react';
 
-import { selectUser } from '../../redux/authSlice';
+import { supabase } from '../config/supabaseClient';
+import { usePresence } from '../hooks/usePresence';
+import { useMessages } from '../hooks/useMessages';
+import { useMediaRecorder } from '../hooks/useMediaRecorder';
+
+import { selectIsAuthenticated, selectIsInitialized, selectUser } from '../redux/authSlice'; 
+import { setShouldScrollToBottom } from '../redux/chatSlice';
 import {
-  selectMessages,
-  selectIsLoading,
-  selectIsLoadingMore,
-  selectHasMoreMessages,
-  selectShouldScrollToBottom,
-  setShouldScrollToBottom,
-  selectSearchQuery,
-  setReplyTo
-} from '../../redux/chatSlice';
+  setActiveCall,
+  setParticipants,
+  addParticipant,
+  removeParticipant,
+  updateParticipantStatus,
+  endCall,
+  selectIsCallRoomOpen,
+  selectIsCallBarVisible,
+} from '../redux/callSlice';
 
-import Loader from '../ui/Loader';
-import TextBubble from './bubbles/TextBubble';
-import AudioBubble from './bubbles/AudioBubble';
-import VoiceNoteBubble from './bubbles/VoiceNoteBubble';
-import VideoBubble from './bubbles/VideoBubble';
-import VideoNoteBubble from './bubbles/VideoNoteBubble';
-import FileBubble from './bubbles/FileBubble';
-import UserProfileModal from '../profile/UserProfileModal';
+import ChatHeader from '../components/chat/ChatHeader';
+import MessageList from '../components/chat/MessageList';
+import ChatInput from '../components/chat/ChatInput';
+import CallBar from '../components/call/CallBar';
+import ActiveCallRoom from '../components/call/ActiveCallRoom';
+import GroupSidebar from '../components/group/GroupSidebar';
+import Loader from '../components/ui/Loader';
+import VideoNoteModal from '../components/ui/VideoNoteModal';
 
-const DateDivider = memo(({ date }) => {
-  const d = new Date(date);
-  const label = isToday(d) ? 'Bugun' : isYesterday(d) ? 'Kecha' : format(d, "d MMMM, yyyy", { locale: uz });
-  
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center py-4 my-2 select-none w-full clear-both pointer-events-none"
-    >
-      <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest bg-white/5 px-3.5 py-1 rounded-full backdrop-blur-md">
-        {label}
-      </span>
-    </motion.div>
-  );
-});
-DateDivider.displayName = 'DateDivider';
+const GROUP_ID = import.meta.env.VITE_GROUP_ID;
 
-const BUBBLE_COMPONENTS = {
-  text: TextBubble,
-  link: TextBubble,
-  audio: AudioBubble,
-  voice_note: VoiceNoteBubble,
-  video: VideoBubble,
-  video_note: VideoNoteBubble,
-  file: FileBubble,
-};
-
-const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead }) => {
+const ChatPage = () => {
   const dispatch = useDispatch();
-  const currentUser = useSelector(selectUser);
-  const messages = useSelector(selectMessages);
-  const isLoading = useSelector(selectIsLoading);
-  const isLoadingMore = useSelector(selectIsLoadingMore);
-  const hasMoreMessages = useSelector(selectHasMoreMessages);
-  const shouldScrollToBottom = useSelector(selectShouldScrollToBottom);
-  const searchQuery = useSelector(selectSearchQuery);
+  const navigate = useNavigate();
+  
+  const isAuth = useSelector(selectIsAuthenticated);
+  const isInit = useSelector(selectIsInitialized);
+  const currentUser = useSelector(selectUser); 
+  
+  const isCallRoomOpen = useSelector(selectIsCallRoomOpen);
+  const isCallBarVisible = useSelector(selectIsCallBarVisible);
 
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const [swipedMessageId, setSwipedMessageId] = useState(null);
+  const { onlineCount, typingText, sendTyping, stopTyping } = usePresence();
+  const { sendMessage, editMessage, fetchMoreMessages, deleteMessage, toggleReaction, markAsRead } = useMessages();
+  
+  const recorder = useMediaRecorder();
+  
+  const [group, setGroup] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const listRef = useRef(null);
-  const bottomRef = useRef(null);
-  const prevScrollHeightRef = useRef(0);
-  const isUserScrollingRef = useRef(false);
-  const isInitialMount = useRef(true);
+  const [viewportHeight, setViewportHeight] = useState('100dvh');
 
-  const scrollToBottom = useCallback((smooth = true) => {
-    if (listRef.current) {
-      listRef.current.scrollTo({
-        top: listRef.current.scrollHeight,
-        behavior: smooth ? 'smooth' : 'auto'
-      });
-    }
-  }, []);
+  const callChannelRef = useRef(null);
+  const dataChannelRef = useRef(null);
+  const unreadCounterRef = useRef(0);
 
+  // ----------------------------------------
+  // 🔴 ZOOM BLOCKER & VISUAL VIEWPORT ENGINE
+  // ----------------------------------------
   useEffect(() => {
-    if (!messages || messages.length === 0 || !currentUser?.id) return;
-    const unreadMessages = messages.filter(msg => {
-      const isMe = msg.user_id === currentUser.id;
-      const iHaveRead = (msg.reads || msg.message_reads || []).some(r => r.user_id === currentUser.id);
-      return !isMe && !iHaveRead;
-    });
-    unreadMessages.forEach(msg => {
-      if (onMarkAsRead) onMarkAsRead(msg.id);
-    });
-  }, [messages, currentUser, onMarkAsRead]);
+    if (!isInit) return;
 
-  useEffect(() => {
-    if (shouldScrollToBottom) {
-      scrollToBottom(true);
-      dispatch(setShouldScrollToBottom(false));
-    }
-  }, [shouldScrollToBottom, scrollToBottom, dispatch]);
+    document.body.style.position = 'fixed';
+    document.body.style.top = '0';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.bottom = '0';
+    document.body.style.overflow = 'hidden';
 
-  useLayoutEffect(() => {
-    if (!isLoading && messages.length > 0 && isInitialMount.current) {
-      scrollToBottom(false);
-      isInitialMount.current = false;
-    } else if (!isLoading && messages.length > 0 && !isUserScrollingRef.current) {
-      scrollToBottom(true);
-    }
-  }, [isLoading, messages.length, scrollToBottom]);
-
-  const handleScroll = useCallback(() => {
-    const el = listRef.current;
-    if (!el) return;
-
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const preventZoom = (e) => {
+      if (e.touches.length > 1) e.preventDefault();
+    };
     
-    // Qayta renderlarni oldini olish uchun faqat o'zgargandagina state'ni yangilaymiz
-    if (distanceFromBottom > 250) {
-      isUserScrollingRef.current = true;
-      if (!showScrollBtn) setShowScrollBtn(true);
-    } else {
-      isUserScrollingRef.current = false;
-      if (showScrollBtn) setShowScrollBtn(false);
-    }
+    let lastTouchEnd = 0;
+    const preventDoubleTapZoom = (e) => {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    };
 
-    if (el.scrollTop < 150 && !isLoadingMore && hasMoreMessages) {
-      prevScrollHeightRef.current = el.scrollHeight;
-      if (onLoadMore) onLoadMore();
-    }
-  }, [isLoadingMore, hasMoreMessages, onLoadMore, showScrollBtn]);
+    document.addEventListener('touchstart', preventZoom, { passive: false });
+    document.addEventListener('touchend', preventDoubleTapZoom, { passive: false });
 
-  useLayoutEffect(() => {
-    if (!isLoadingMore && prevScrollHeightRef.current) {
-      const el = listRef.current;
-      if (el) {
-        const diff = el.scrollHeight - prevScrollHeightRef.current;
-        el.scrollTop += diff;
+    let lastHeight = window.innerHeight;
+
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const currentHeight = window.visualViewport.height;
+        setViewportHeight(`${currentHeight}px`);
+        if (currentHeight < lastHeight - 100) {
+          dispatch(setShouldScrollToBottom(true));
+          // Klaviatura ochilganda badge'ni tozalash
+          if ('clearAppBadge' in navigator) {
+            navigator.clearAppBadge().catch(() => {});
+            unreadCounterRef.current = 0;
+          }
+        }
+        lastHeight = currentHeight;
+        window.scrollTo(0, 0);
+      } else {
+        setViewportHeight(`${window.innerHeight}px`);
       }
-      prevScrollHeightRef.current = 0;
-    }
-  }, [isLoadingMore, messages.length]);
+    };
 
-  const scrollToMessage = useCallback((msgId) => {
-    if (!msgId) return; 
-    const element = document.getElementById(`msg-${msgId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      element.classList.add('bg-[#007aff]/20', 'scale-[1.02]', 'rounded-2xl', 'transition-all', 'duration-300', 'z-50', 'relative');
-      setTimeout(() => {
-        element.classList.remove('bg-[#007aff]/20', 'scale-[1.02]');
-        setTimeout(() => element.classList.remove('transition-all', 'duration-300', 'z-50', 'relative', 'rounded-2xl'), 300);
-      }, 1200);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('scroll', handleResize);
+    } else {
+      window.addEventListener('resize', handleResize);
     }
+    
+    handleResize();
+
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.bottom = '';
+      document.body.style.overflow = '';
+      
+      document.removeEventListener('touchstart', preventZoom);
+      document.removeEventListener('touchend', preventDoubleTapZoom);
+
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+        window.visualViewport.removeEventListener('scroll', handleResize);
+      } else {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
+  }, [isInit, dispatch]);
+
+  useEffect(() => {
+    if (isInit && !isAuth) navigate('/login', { replace: true });
+  }, [isAuth, isInit, navigate]);
+
+  // ----------------------------------------
+  // 🔴 MA'LUMOT YUKLASH (ESKI, ISHONCHLI USUL)
+  // ----------------------------------------
+  const fetchGroupData = useCallback(async () => {
+    if (!GROUP_ID) return;
+    
+    // Auto-retry mantiqi: Agar RLS ma'lumotni darhol bermasa, orqa fonda yana urinadi
+    let retryCount = 0;
+    
+    const tryFetch = async () => {
+      try {
+        const [groupRes, membersRes] = await Promise.all([
+          supabase.from('groups').select('*').eq('id', GROUP_ID).maybeSingle(),
+          supabase
+            .from('group_members')
+            .select('*, profiles:user_id(id, first_name, last_name, avatar_url, email, bio, is_blocked)')
+            .eq('group_id', GROUP_ID),
+        ]);
+
+        if (groupRes.data) {
+          setGroup(groupRes.data);
+          if (membersRes.data) setMembers(membersRes.data);
+          setIsLoading(false); // Ma'lumot kelsa, loaderni o'chiradi
+        } else if (retryCount < 5) {
+          // Token kelishini kutib qayta urinish
+          retryCount++;
+          setTimeout(tryFetch, 600);
+        } else {
+          setIsLoading(false); // Baribir o'chiradi, ekran qotib qolmasligi uchun
+        }
+      } catch (err) {
+        console.error(err);
+        setIsLoading(false);
+      }
+    };
+
+    tryFetch();
   }, []);
 
-  const handleSwipeReply = useCallback((msg) => {
-    dispatch(setReplyTo(msg));
-    if (navigator.vibrate) navigator.vibrate(20);
+  // ----------------------------------------
+  // 🔴 REALTIME VA BAZA BILAN ALOQA
+  // ----------------------------------------
+  useEffect(() => {
+    if (!isAuth) return;
+    fetchGroupData();
+
+    const dataChannel = supabase
+      .channel(`chatpage_data_sync_${GROUP_ID}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'groups', filter: `id=eq.${GROUP_ID}` }, (payload) => {
+        setGroup(payload.new);
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+        setMembers((prev) => prev.map((m) => 
+          m.user_id === payload.new.id ? { ...m, profiles: { ...m.profiles, ...payload.new } } : m
+        ));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'group_members', filter: `group_id=eq.${GROUP_ID}` }, (payload) => {
+        setMembers((prev) => prev.map((m) => 
+          m.user_id === payload.new.user_id ? { ...m, ...payload.new } : m
+        ));
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_members', filter: `group_id=eq.${GROUP_ID}` }, () => fetchGroupData())
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'group_members', filter: `group_id=eq.${GROUP_ID}` }, () => fetchGroupData())
+      
+      // 🍏 YANGI XABAR KELGANDA BILDIRISHNOMALAR (YANGI QO'SHILGAN QISM)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        dispatch(setShouldScrollToBottom(true));
+
+        if (currentUser?.id && payload.new.user_id !== currentUser.id) {
+          
+          // 1. Web Push Notification
+          const showWebNotification = () => {
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.ready.then((registration) => {
+                registration.showNotification(payload.new.sender_name || "Yangi xabar", {
+                  body: payload.new.content || "Fayl yuborildi",
+                  icon: '/icon-192.png', 
+                  tag: 'jora-message-sync',
+                  renotify: true
+                });
+              }).catch(() => {});
+            }
+          };
+
+          if (Notification.permission === 'granted') {
+            showWebNotification();
+          }
+
+          // 2. App Badge
+          if ('setAppBadge' in navigator) {
+            unreadCounterRef.current += 1;
+            navigator.setAppBadge(unreadCounterRef.current).catch(() => {});
+          }
+
+          // 3. Vibratsiya
+          if ('vibrate' in navigator && !document.hidden) {
+            navigator.vibrate(15); 
+          }
+
+          // 4. Ovoz
+          try {
+            const audio = new Audio('/sounds/receive.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(() => {});
+          } catch (e) {}
+        }
+      })
+      .subscribe();
+
+    dataChannelRef.current = dataChannel;
+
+    return () => {
+      if (dataChannelRef.current) supabase.removeChannel(dataChannelRef.current);
+    };
+  }, [isAuth, fetchGroupData, dispatch, currentUser?.id]);
+
+  // ----------------------------------------
+  // 🔴 CALL FETCHING (ESKI HOLATDA QOLDI)
+  // ----------------------------------------
+  const fetchActiveCall = useCallback(async () => {
+    const { data } = await supabase
+      .from('active_calls')
+      .select('*, starter:started_by(first_name, last_name, avatar_url)')
+      .eq('group_id', GROUP_ID)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (data) {
+      dispatch(setActiveCall(data));
+      const { data: parts } = await supabase
+        .from('call_participants')
+        .select('*, profiles:user_id(first_name, last_name, avatar_url)')
+        .eq('call_id', data.id)
+        .is('left_at', null);
+      if (parts) dispatch(setParticipants(parts));
+    }
   }, [dispatch]);
 
-  // TEZLIK UCHUN OPTIMIZATSIYA: Members massivini O(1) xeshlash xaritasiga aylantiramiz
-  const membersMap = useMemo(() => {
-    const map = {};
-    members.forEach(m => {
-      map[m.user_id] = m;
-    });
-    return map;
-  }, [members]);
-
-  const groupedItems = useMemo(() => {
-    if (!Array.isArray(messages)) return [];
-
-    const filteredMessages = searchQuery
-      ? messages.filter((m) =>
-          !m.is_deleted_for_all && m.content?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : messages;
-
-    const items = [];
-
-    filteredMessages.forEach((msg, index) => {
-      if (!msg || (!msg.created_at && !msg.isPending)) return;
-
-      const msgDate = new Date(msg.created_at || Date.now());
-      const prevMsg = filteredMessages[index - 1];
-      const prevMsgDate = prevMsg ? new Date(prevMsg.created_at || Date.now()) : null;
-
-      if (!prevMsgDate || !isSameDay(msgDate, prevMsgDate)) {
-        items.push({ 
-          type: 'date_separator', 
-          id: `date-${msgDate.getTime()}-${index}`, 
-          date: msg.created_at || Date.now()
-        });
-      }
-
-      let showAvatar = true;
-      let showName = true;
-      const nextMsg = filteredMessages[index + 1];
-      
-      if (prevMsg?.user_id === msg.user_id && prevMsgDate && isSameDay(msgDate, prevMsgDate)) {
-          showName = false;
-      }
-      if (nextMsg?.user_id === msg.user_id && isSameDay(new Date(nextMsg.created_at || Date.now()), msgDate)) {
-          showAvatar = false; 
-      }
-
-      // O(1) tezlikda topamiz (eski sekin `.find()` o'rniga)
-      const memberInfo = membersMap[msg.user_id];
-      const realTimeProfile = memberInfo?.profiles || msg.profiles;
-      
-      const realTimeMsg = {
-        ...msg,
-        profiles: realTimeProfile 
-      };
-
-      items.push({ 
-        type: 'message', 
-        data: realTimeMsg, 
-        showAvatar,
-        showName,
-        isOwn: msg.user_id === currentUser?.id,
-        role: memberInfo?.role || 'user',
-        isOnline: memberInfo?.is_online || false
-      });
-    });
-
-    return items;
-  }, [messages, searchQuery, currentUser, membersMap]);
-
   useEffect(() => {
-    if (selectedUser) {
-      const updatedMember = membersMap[selectedUser.id];
-      if (updatedMember && updatedMember.profiles) {
-        setSelectedUser({
-          ...updatedMember.profiles,
-          id: updatedMember.user_id,
-          role: updatedMember.role,
-          isOnline: updatedMember.is_online
-        });
-      }
-    }
-  }, [membersMap, selectedUser]);
+    if (!isAuth) return;
+    fetchActiveCall();
 
-  if (isLoading) {
-    return <Loader fullScreen text="Xabarlar yuklanmoqda..." />; 
-  }
+    const channel = supabase
+      .channel(`calls-${GROUP_ID}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'active_calls', filter: `group_id=eq.${GROUP_ID}` }, async (payload) => {
+        const { data } = await supabase.from('active_calls').select('*, starter:started_by(first_name, last_name, avatar_url)').eq('id', payload.new.id).maybeSingle();
+        if (data) dispatch(setActiveCall(data));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'active_calls', filter: `group_id=eq.${GROUP_ID}` }, (payload) => {
+        if (!payload.new.is_active) dispatch(endCall());
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_participants' }, async (payload) => {
+        const { data } = await supabase.from('call_participants').select('*, profiles:user_id(first_name, last_name, avatar_url)').eq('call_id', payload.new.call_id).eq('user_id', payload.new.user_id).maybeSingle();
+        if (data) dispatch(addParticipant(data));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'call_participants' }, (payload) => {
+        if (payload.new.left_at) {
+          dispatch(removeParticipant({ user_id: payload.new.user_id }));
+        } else {
+          dispatch(updateParticipantStatus({
+            user_id: payload.new.user_id,
+            is_muted: payload.new.is_muted,
+            is_video_on: payload.new.is_video_on,
+          }));
+        }
+      })
+      .subscribe();
+
+    callChannelRef.current = channel;
+    return () => {
+      if (callChannelRef.current) supabase.removeChannel(callChannelRef.current);
+    };
+  }, [isAuth, dispatch, fetchActiveCall]);
+
+  // ----------------------------------------
+  // 🔴 XABAR YUBORISH VA PUSH NOTIFICATION API
+  // ----------------------------------------
+  const handleSendMessage = useCallback(async (payload) => {
+    try {
+      if (payload.isEdit && payload.msgId) {
+        await editMessage(payload.msgId, payload.content);
+        return; 
+      }
+      if (payload.file) {
+        await sendMessage({ content: payload.content || null, file: payload.file, messageType: payload.messageType });
+      } else {
+        await sendMessage({ content: payload.content, messageType: 'text' });
+      }
+      
+      dispatch(setShouldScrollToBottom(true));
+
+      // 🍏 NATIVE PUSH API INTEGRATION (Yangi qism)
+      if (currentUser?.id) {
+        const { data: memberRows } = await supabase
+          .from('group_members')
+          .select('user_id')
+          .eq('group_id', GROUP_ID)
+          .neq('user_id', currentUser.id);
+
+        if (memberRows && memberRows.length > 0) {
+          const userIds = memberRows.map(m => m.user_id);
+          const { data: subRows } = await supabase.from('user_push_subscriptions').in('user_id', userIds);
+
+          if (subRows && subRows.length > 0) {
+            const subscriptionsList = subRows.map(s => s.subscription);
+            fetch('https://sinfserver.onrender.com/api/send-push', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                subscriptions: subscriptionsList,
+                senderName: `${currentUser.first_name || 'Jora'}`,
+                messageContent: payload.content || "Fayl yuborildi"
+              })
+            }).catch(() => {}); 
+          }
+        }
+      }
+
+      if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+
+    } catch (err) {
+      console.error(err);
+    }
+  }, [sendMessage, editMessage, dispatch, currentUser]);
+
+
+  // 🔴 ENG ASOSIY QISM: QORA EKRANNI YO'QOTISH MANTIQI
+  if (!isInit) return <Loader fullScreen />;
+  if (!isAuth) return null;
 
   return (
-    // ANTI-COPY: Barcha matnni nusxalash va select qilishni butunlay yopish
     <div 
-      className="relative flex-1 min-h-0 bg-[#000000] select-none" 
+      className="absolute top-0 left-0 w-full flex flex-col bg-[#000000] overflow-hidden select-none"
       style={{ 
+        height: viewportHeight,
+        overscrollBehavior: 'none',
         WebkitTapHighlightColor: 'transparent',
-        WebkitTouchCallout: 'none', 
-        WebkitUserSelect: 'none',
-        userSelect: 'none'
+        touchAction: 'manipulation' 
       }}
-      onContextMenu={(e) => e.preventDefault()}
-      onCopy={(e) => e.preventDefault()}
     >
-      <div
-        ref={listRef}
-        onScroll={handleScroll}
-        className="h-full overflow-y-auto overflow-x-hidden px-2 sm:px-4 pt-4 pb-[130px] custom-scrollbar relative flex flex-col"
-        style={{ WebkitOverflowScrolling: 'touch' }} 
-      >
-        {isLoadingMore && (
-          <div className="flex justify-center py-4 w-full pointer-events-none">
-            <Loader2 className="animate-spin text-[#007aff]" size={24} />
-          </div>
-        )}
+      <div className="flex flex-col flex-1 min-h-0 w-full relative pt-[env(safe-area-inset-top)]">
+        
+        {/* 1. HEADER (HECH QACHON YO'QOLMAYDI) */}
+        <div className="w-full shrink-0 z-50">
+          <ChatHeader
+            group={group || { name: 'Yuklanmoqda...' }}
+            onlineCount={onlineCount}
+            totalMembers={members.length}
+            typingText={typingText}
+            onOpenSidebar={() => setSidebarOpen(true)}
+          />
+        </div>
 
-        {groupedItems.length === 0 && !isLoading && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center h-full gap-4 py-16 opacity-60 flex-1 pointer-events-none"
-          >
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center shadow-inner">
-              <MessageSquareOff size={32} className="text-white/40" />
-            </div>
-            <div className="text-center">
-              <p className="text-[15px] font-medium text-white/70">
-                {searchQuery ? 'Hech narsa topilmadi' : 'Hali xabarlar yo\'q'}
-              </p>
-              <p className="text-xs text-white/40 mt-1">
-                {searchQuery ? `"${searchQuery}" bo'yicha natija yo'q` : 'Birinchi bo\'lib xabar yozing!'}
-              </p>
-            </div>
-          </motion.div>
-        )}
+        {/* 2. MESSAGES CONTAINER */}
+        <div className="relative flex-1 min-h-0 w-full bg-[#000000] z-10 flex flex-col">
+          {/* DIQQAT: Ekranni qora qilib qo'yadigan Loader o'rniga, nafis aylanuvchi doira qo'yildi */}
+          {isLoading ? (
+             <Loader fullScreen={true} />
+          ) : (
+            <MessageList 
+              onLoadMore={fetchMoreMessages}
+              onDelete={deleteMessage}         
+              onReact={toggleReaction}
+              onMarkAsRead={markAsRead}
+              members={members} 
+            />
+          )}
 
-        {groupedItems.map((item) => {
-          if (item.type === 'date_separator') {
-            return <DateDivider key={item.id} date={item.date} />;
-          }
-
-          const msg = item.data;
-          
-          if (msg.is_deleted_for_all) {
-            return (
-              <motion.div 
-                key={msg.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className={`flex w-full ${item.isOwn ? 'justify-end' : 'justify-start'} ${item.showAvatar ? 'mb-3' : 'mb-1'} pointer-events-none`}
-              >
-                <div className={`px-3 py-1.5 rounded-[14px] text-[12px] font-medium flex items-center gap-1.5 border ${item.isOwn ? 'bg-white/5 text-white/40 border-white/5' : 'bg-white/5 text-white/40 border-white/5'}`}>
-                  <Ban size={12} className="opacity-60" /> Xabar o'chirildi
-                </div>
-              </motion.div>
-            );
-          }
-
-          const BubbleComponent = BUBBLE_COMPONENTS[msg.message_type] || TextBubble;
-          const isPending = msg.isPending || msg.status === 'pending' || !msg.id;
-          
-          return (
-            <motion.div 
-              key={msg.id || `pending-${msg.created_at}`} 
-              id={`msg-${msg.id}`}
-              layout="position"
-              initial={{ opacity: 0, scale: 0.85, y: 25, originX: item.isOwn ? 1 : 0, originY: 1 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 450, damping: 28, mass: 0.8 }}
-              className={`flex items-end w-full relative group ${item.isOwn ? 'justify-end' : 'justify-start'} ${item.showAvatar ? 'mb-3.5' : 'mb-[3px]'}`}
-            >
+          {/* Typing Indicator */}
+          <AnimatePresence>
+            {typingText && (
               <motion.div
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.1}
-                onDrag={(e, info) => {
-                  if (Math.abs(info.offset.x) > 40 && swipedMessageId !== msg.id) {
-                    setSwipedMessageId(msg.id);
-                  }
-                }}
-                onDragEnd={(e, info) => {
-                  setSwipedMessageId(null);
-                  if (Math.abs(info.offset.x) > 50) {
-                    handleSwipeReply(msg);
-                  }
-                }}
-                className={`max-w-[85%] sm:max-w-[70%] relative flex items-end gap-2 ${item.isOwn ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 8, transition: { duration: 0.15 } }}
+                transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+                className="absolute bottom-2 left-4 z-20 flex flex-col items-start pointer-events-none"
               >
-                <div className="relative flex items-end">
-                  <BubbleComponent
-                    message={msg}
-                    isOwn={item.isOwn}
-                    showAvatar={item.showAvatar}
-                    showName={item.showName}
-                    role={item.role}
-                    onUserClick={() => {
-                      setSelectedUser({
-                        ...msg.profiles,
-                        id: msg.user_id,
-                        role: item.role,
-                        isOnline: item.isOnline
-                      });
-                    }}
-                    onDelete={onDelete}
-                    onReact={onReact}
-                    totalMembers={members}
-                    onScrollToMessage={scrollToMessage}
-                  />
-                  {isPending && item.isOwn && (
-                    <div className="absolute -right-5 bottom-1.5 flex items-center justify-center w-[18px] h-[18px] bg-black/60 rounded-full backdrop-blur-sm shadow-sm pointer-events-none">
-                      <Clock size={10} className="text-white/80" />
-                    </div>
-                  )}
-                </div>
-
-                <AnimatePresence>
-                  {swipedMessageId === msg.id && (
+                <div className="bg-[#1c1c1e]/90 border border-white/5 shadow-2xl rounded-[18px] rounded-bl-sm px-4 py-2.5 flex items-center gap-1.5 backdrop-blur-2xl">
+                  {[0, 1, 2].map((i) => (
                     <motion.div
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 shrink-0 mb-1 pointer-events-none"
-                    >
-                      <Reply size={16} className="text-white" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
+                      key={i}
+                      animate={{ y: [0, -4, 0], opacity: [0.35, 1, 0.35] }}
+                      transition={{ duration: 1, repeat: Infinity, delay: i * 0.18 }}
+                      className="w-1.5 h-1.5 rounded-full bg-[#007aff]"
+                    />
+                  ))}
+                </div>
+                <span className="text-[10.5px] text-slate-400 font-semibold mt-1 ml-1 tracking-wide">
+                  {typingText.replace('yozmoqda...', '...')}
+                </span>
               </motion.div>
-            </motion.div>
-          );
-        })}
+            )}
+          </AnimatePresence>
+        </div>
 
-        <div ref={bottomRef} className="h-4 w-full float-left clear-both" />
+        {/* 3. BOTTOM PANEL: CallBar va Input */}
+        <div className="w-full bg-[#121214] border-t border-white/5 flex flex-col z-40 shrink-0">
+          
+          <AnimatePresence mode="popLayout">
+            {isCallBarVisible && (
+              <motion.div
+                layout 
+                initial={{ height: 0, opacity: 0, scale: 0.96 }}
+                animate={{ height: 'auto', opacity: 1, scale: 1 }}
+                exit={{ height: 0, opacity: 0, scale: 0.96 }}
+                transition={{ type: 'spring', damping: 28, stiffness: 240 }}
+                className="w-full px-4 pt-3 pb-1 overflow-hidden"
+              >
+                <CallBar onOpenCallRoom={() => {}} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="pb-[env(safe-area-inset-bottom)]">
+            <ChatInput
+              onSend={handleSendMessage}
+              groupSettings={group}
+              onTyping={sendTyping}
+              onStopTyping={stopTyping}
+              recorder={recorder}
+            />
+          </div>
+        </div>
       </div>
 
+      {/* OVERLAYS & FULLSCREEN MODALS */}
       <AnimatePresence>
-        {showScrollBtn && (
-          <motion.button
-            key="scroll-bottom-btn"
-            initial={{ opacity: 0, scale: 0.5, y: 40 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.5, y: 40, transition: { duration: 0.2 } }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            onClick={() => {
-                isUserScrollingRef.current = false;
-                scrollToBottom(true);
-            }}
-            className="absolute bottom-6 right-4 sm:right-6 z-30 w-[44px] h-[44px] rounded-full bg-[#1c1c1e]/90 backdrop-blur-2xl text-white border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center transition-transform active:scale-[0.85]"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-          >
-            <ArrowDown size={22} strokeWidth={2.5} className="text-[#007aff]" />
-          </motion.button>
+        {recorder.isRecording && recorder.recordingType === 'video' && (
+          <VideoNoteModal stream={recorder.stream} isRecording={recorder.isRecording} duration={recorder.duration} onFlip={recorder.flipCamera} />
         )}
       </AnimatePresence>
 
-      <UserProfileModal 
-        isOpen={!!selectedUser} 
-        onClose={() => setSelectedUser(null)} 
-        user={selectedUser} 
-        role={selectedUser?.role}
-        isOnline={selectedUser?.isOnline}
-      />
+      <AnimatePresence>
+        {isCallRoomOpen && <ActiveCallRoom />}
+      </AnimatePresence>
+
+      <GroupSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} group={group} members={members} onlineCount={onlineCount} />
     </div>
   );
 };
 
-export default MessageList;
+export default ChatPage;
