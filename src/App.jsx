@@ -8,9 +8,9 @@ import { supabase } from './config/supabaseClient';
 import { selectIsAuthenticated, selectIsInitialized, selectUser, clearAuth } from './redux/authSlice'; 
 import { useAuth } from './hooks/useAuth';
 
-import Login     from './pages/Login';
-import ChatPage from './pages/ChatPage';
-import NotFound from './pages/NotFound';
+const Login = lazy(() => import('./pages/Login'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 import Loader   from './components/ui/Loader';
 import PasscodeScreen from './components/ui/PasscodeScreen';
 
@@ -282,9 +282,11 @@ const App = () => {
   }, []);
 
   return (
+    <Suspense fallback={<Loader />}>
     <BrowserRouter>
       <AppRoutes />
     </BrowserRouter>
+      </Suspense>
   );
 };
 
