@@ -1,26 +1,9 @@
-// ==========================================
-// VideoBubble.jsx — Oddiy to'rtburchak video xabari
-// ==========================================
-// - Thumbnail (birinchi kadr) avtomatik
-// - Play overlay (hover da chiqadi)
-// - Inline player (bosganda sahifadan tashqariga chiqmaydi)
-// - To'liq ekran tugmasi
-// - Ovoz va davomiylik ko'rsatkichi
-// - BaseBubble wrapper
-//
-// ESLATMA: VideoNoteBubble = yumaloq (Telegram kabi)
-//          VideoBubble     = to'rtburchak oddiy video
-// ==========================================
-
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize2 } from 'lucide-react';
 import BaseBubble from './BaseBubble';
 import { formatDuration } from '../../../utils/formatters';
 import { useSelector } from 'react-redux';
 
-// ==========================================
-// VIDEO PLAYER KOMPONENTI
-// ==========================================
 const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) => {
   const videoRef  = useRef(null);
   const wrapRef   = useRef(null);
@@ -33,11 +16,8 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
   const [isFullscreen,  setIsFullscreen]  = useState(false);
   const [isLoaded,      setIsLoaded]      = useState(false);
 
-  // Mudd bo'yicha hisoblash
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const displayTime = isPlaying || currentTime > 0 ? currentTime : duration;
-
-  // ---- Event listeners ----
+  
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -45,13 +25,11 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
     const onMeta    = () => { setDuration(video.duration || msgDuration || 0); setIsLoaded(true); };
     const onTime    = () => setCurrentTime(video.currentTime);
     const onEnded   = () => { setIsPlaying(false); setCurrentTime(0); };
-    const onWaiting = () => {};
 
     video.addEventListener('loadedmetadata', onMeta);
     video.addEventListener('timeupdate', onTime);
     video.addEventListener('ended', onEnded);
 
-    // Fullscreen change
     const onFSChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFSChange);
 
@@ -63,7 +41,6 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
     };
   }, [url, msgDuration]);
 
-  // ---- Play / Pause ----
   const togglePlay = useCallback(async () => {
     const video = videoRef.current;
     if (!video) return;
@@ -76,7 +53,6 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
     }
   }, [isPlaying]);
 
-  // ---- Ovoz ----
   const toggleMute = useCallback((e) => {
     e.stopPropagation();
     const video = videoRef.current;
@@ -85,7 +61,6 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
     setIsMuted(!isMuted);
   }, [isMuted]);
 
-  // ---- Progress seek ----
   const handleSeek = useCallback((e) => {
     e.stopPropagation();
     const video = videoRef.current;
@@ -95,7 +70,6 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
     video.currentTime = ratio * duration;
   }, [duration]);
 
-  // ---- To'liq ekran ----
   const handleFullscreen = useCallback((e) => {
     e.stopPropagation();
     const container = wrapRef.current;
@@ -107,13 +81,16 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
     }
   }, []);
 
-  // ---- Rang moslashuvi ----
   const controlBg    = 'bg-black/50 backdrop-blur-sm';
   const progressFill = isMe ? '#fff' : '#60a5fa';
 
   return (
-    <div className="px-0 pt-0 pb-0">
-      {/* ---- Video wrapper ---- */}
+    // ANTI-COPY xususiyatlari qo'shildi
+    <div 
+      className="px-0 pt-0 pb-0 select-none"
+      onContextMenu={(e) => e.preventDefault()}
+      style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+    >
       <div
         ref={wrapRef}
         className="relative overflow-hidden bg-black cursor-pointer select-none"
@@ -122,36 +99,36 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
       >
-        {/* Video elementi */}
         <video
           ref={videoRef}
           src={url}
           playsInline
           preload="metadata"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover pointer-events-none"
         />
 
-        {/* ---- Play/Pause overlay ---- */}
         <div
           className={[
             'absolute inset-0 flex items-center justify-center',
-            'transition-opacity duration-200',
+            'transition-opacity duration-200 pointer-events-none',
             isPlaying && !showControls ? 'opacity-0' : 'opacity-100',
           ].join(' ')}
         >
-          {/* Gradient overlay (faqat to'xtatilganda) */}
           {(!isPlaying || showControls) && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           )}
 
-          {/* Katta play tugmasi — faqat to'xtatilganda yoki hover da */}
           <div
             className={[
-              'relative z-10 w-14 h-14 rounded-full flex items-center justify-center',
+              'relative z-10 w-14 h-14 rounded-full flex items-center justify-center pointer-events-auto',
               controlBg,
               'transition-all duration-200',
               isPlaying && !showControls ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
             ].join(' ')}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlay();
+            }}
           >
             {isPlaying
               ? <Pause  size={22} fill="white" className="text-white" />
@@ -160,23 +137,20 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
           </div>
         </div>
 
-        {/* ---- Boshlanishdan oldin: davomiylik ko'rsatkichi ---- */}
         {!isPlaying && !isLoaded && msgDuration && (
-          <div className="absolute bottom-2 left-2 z-10">
+          <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
             <span className={`text-[11px] font-semibold text-white/80 ${controlBg} px-2 py-0.5 rounded-full`}>
               {formatDuration(msgDuration)}
             </span>
           </div>
         )}
 
-        {/* ---- Nazorat paneli (hover da yoki o'ynatilayotganda) ---- */}
         {(showControls || isPlaying) && (
           <div
-            className="absolute bottom-0 left-0 right-0 z-10 px-2 pb-2 pt-6"
+            className="absolute bottom-0 left-0 right-0 z-10 px-2 pb-2 pt-6 pointer-events-auto"
             style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Progress bar */}
             <div
               className="relative h-1 rounded-full cursor-pointer mb-2 overflow-hidden"
               style={{ background: 'rgba(255,255,255,0.2)' }}
@@ -188,14 +162,11 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
               />
             </div>
 
-            {/* Nazorat tugmalari qatori */}
             <div className="flex items-center justify-between">
-              {/* Chap: vaqt */}
-              <span className="text-[11px] text-white/70 tabular-nums font-medium">
+              <span className="text-[11px] text-white/70 tabular-nums font-medium pointer-events-none">
                 {formatDuration(currentTime)} / {formatDuration(duration)}
               </span>
 
-              {/* O'ng: ovoz + to'liq ekran */}
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={toggleMute}
@@ -215,9 +186,8 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
         )}
       </div>
 
-      {/* ---- Pastda: fayl nomi (ixtiyoriy) ---- */}
       {fileName && (
-        <div className="px-3 py-1">
+        <div className="px-3 py-1 pointer-events-none">
           <p className={`text-[11px] truncate ${isMe ? 'text-white/50' : 'text-slate-500'}`}>
             {fileName}
           </p>
@@ -227,18 +197,13 @@ const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) =
   );
 };
 
-// ==========================================
-// WRAPPER (BaseBubble bilan)
-// ==========================================
 const VideoBubble = (props) => {
   const { message } = props;
   const currentUser = useSelector((s) => s.auth.user);
   const isMe = message?.user_id === currentUser?.id;
 
   return (
-    <BaseBubble
-    {...props}
-    >
+    <BaseBubble {...props}>
       <VideoPlayer
         url={message.file_url}
         fileName={message.file_name}
@@ -251,15 +216,3 @@ const VideoBubble = (props) => {
 };
 
 export default VideoBubble;
-
-// ==========================================
-// ISHLATILISHI (USAGE):
-// ==========================================
-// <VideoBubble
-//   message={message}
-//   onDelete={deleteMessage}
-//   onReact={toggleReaction}
-//   totalMembers={totalMembers}
-//   showAvatar={showAvatar}
-//   showName={showName}
-// />
