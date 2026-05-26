@@ -1,6 +1,6 @@
 import React from 'react';
 import BaseBubble from './BaseBubble';
-import LinkPreview from '../LinkPreview'; 
+import LinkPreview from './LinkPreview'; 
 
 const linkifyText = (text) => {
   if (!text) return null;
