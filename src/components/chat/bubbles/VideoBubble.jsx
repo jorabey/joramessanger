@@ -1,98 +1,105 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, X, Maximize2, Loader2, Volume2, VolumeX } from 'lucide-react';
+import { X, Download, Play } from 'lucide-react';
 import BaseBubble from './BaseBubble';
-
-const VideoViewer = ({ url, onClose }) => {
-  const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  const togglePlay = () => {
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[99999] bg-black flex items-center justify-center"
-      onClick={onClose}
-    >
-      {/* Yopish tugmasi */}
-      <button 
-        onClick={onClose}
-        className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all z-50"
-      >
-        <X size={24} />
-      </button>
-
-      {/* Video pleyer */}
-      <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-        <video
-          ref={videoRef}
-          src={url}
-          className="max-w-full max-h-[85vh] object-contain"
-          playsInline
-          onClick={togglePlay}
-        />
-        
-        {/* Markaziy Play tugmasi */}
-        {!isPlaying && (
-          <button 
-            onClick={togglePlay}
-            className="absolute w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all"
-          >
-            <Play size={40} fill="white" className="text-white ml-2" />
-          </button>
-        )}
-      </div>
-    </motion.div>
-  );
-};
 
 const VideoBubble = (props) => {
   const { message } = props;
   const [showViewer, setShowViewer] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async (e) => {
+    e.stopPropagation();
+    setIsDownloading(true);
+    try {
+      const response = await fetch(message.file_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = message.file_name || 'video.mp4';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Yuklashda xatolik:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <>
       <BaseBubble {...props}>
+        {/* Chat bubble ichidagi ko'rinish */}
         <div 
-          className="relative overflow-hidden cursor-pointer group rounded-xl"
+          className="relative cursor-pointer group rounded-xl overflow-hidden select-none bg-black"
           onClick={() => setShowViewer(true)}
-          onContextMenu={(e) => e.preventDefault()}
-          style={{ maxWidth: 280, WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+          style={{ width: '280px', aspectRatio: '16/9' }}
         >
-          {/* Video poster (thumbnail) */}
-          <div className="relative aspect-video bg-black flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center justify-center">
-               <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                 <Play size={20} fill="white" className="text-white ml-1" />
-               </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            {/* Video ikonka */}
+            <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Play size={24} fill="white" className="text-white ml-1" />
             </div>
-            {/* Videoni oddiy rasm kabi ko'rsatib turamiz */}
-            <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-0.5 rounded-md text-[10px] text-white font-bold uppercase">
+            {/* "Video" yorlig'i */}
+            <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-0.5 rounded text-[10px] text-white font-bold uppercase tracking-wider">
               Video
             </div>
           </div>
-          
-          {message.content && (
-            <div className="px-3 py-2 text-[15px] text-white/90 bg-[#1c1c1e]">
-              {message.content}
-            </div>
-          )}
         </div>
+        
+        {message.content && (
+          <div className="px-3 py-2 text-[15px] text-white/90 break-words bg-[#1c1c1e] max-w-[280px]">
+            {message.content}
+          </div>
+        )}
       </BaseBubble>
 
+      {/* Fullscreen Viewer - Telegram Style */}
       <AnimatePresence>
-        {showViewer && <VideoViewer url={message.file_url} onClose={() => setShowViewer(false)} />}
+        {showViewer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] bg-black flex flex-col"
+          >
+            {/* 1. Header (Yopish) */}
+            <div className="flex items-center justify-between p-4 z-50">
+              <span className="text-white/50 text-sm font-medium ml-2">Video</span>
+              <button 
+                onClick={() => setShowViewer(false)}
+                className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-90"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* 2. Video maydoni (Kattaroq va joylashtirilgan) */}
+            <div className="flex-1 flex items-center justify-center overflow-hidden p-2">
+              <video
+                src={message.file_url}
+                controls
+                autoPlay
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+
+            {/* 3. Footer (Yuklab olish) */}
+            <div className="p-6 flex justify-center z-50">
+              <button 
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="flex items-center gap-3 px-8 py-4 bg-[#007aff] text-white font-bold rounded-2xl shadow-xl hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Download size={20} />
+                {isDownloading ? 'Yuklanmoqda...' : 'Yuklab olish'}
+              </button>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </>
   );
