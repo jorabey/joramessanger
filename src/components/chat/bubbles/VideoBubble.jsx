@@ -1,8 +1,3 @@
-
-
-
-
-
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize2 } from 'lucide-react';
 import BaseBubble from './BaseBubble';
@@ -215,4 +210,3 @@ isMe={isMe}
 };
 
 export default VideoBubble;
-
