@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Maximize2 } from 'lucide-react';
 import BaseBubble from './BaseBubble';
@@ -9,6 +8,7 @@ const ImageBubble = (props) => {
   const [showViewer, setShowViewer] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Rasmni yuklab olish
   const handleDownload = async (e) => {
     e.stopPropagation();
     setIsDownloading(true);
@@ -39,10 +39,11 @@ const ImageBubble = (props) => {
           onContextMenu={(e) => e.preventDefault()}
           style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
         >
+          {/* Rasm qismi */}
           <div className="relative flex items-center justify-center bg-black/10 min-h-[150px] max-h-[300px]">
             <img
               src={message.file_url}
-              alt="Chat image"
+              alt={message.file_name || 'Rasm'}
               className="max-w-[280px] sm:max-w-[320px] w-auto h-auto object-cover pointer-events-none"
               loading="lazy"
               draggable="false"
@@ -52,6 +53,7 @@ const ImageBubble = (props) => {
             </div>
           </div>
           
+          {/* Matn qismi */}
           {message.content && (
             <div className="px-3 py-2 text-[15px] text-white/90 break-words select-none bg-[#1c1c1e]">
               {message.content}
@@ -60,7 +62,7 @@ const ImageBubble = (props) => {
         </div>
       </BaseBubble>
 
-      {/* Fullscreen Viewer - Fixed layout */}
+      {/* Fullscreen Viewer */}
       <AnimatePresence>
         {showViewer && (
           <motion.div
@@ -69,8 +71,8 @@ const ImageBubble = (props) => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[99999] bg-black flex flex-col"
           >
-            {/* Header - Yopish tugmasi */}
-            <div className="absolute top-0 left-0 right-0 p-4 flex justify-end z-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+            {/* 1. Header (Yopish tugmasi) */}
+            <div className="absolute top-0 left-0 right-0 p-4 flex justify-end z-[100] bg-gradient-to-b from-black/60 to-transparent">
               <button 
                 onClick={(e) => { e.stopPropagation(); setShowViewer(false); }}
                 className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all active:scale-90"
@@ -79,27 +81,22 @@ const ImageBubble = (props) => {
               </button>
             </div>
 
-            {/* Rasm maydoni - Drag va Pan funksiyasi bilan */}
-            <motion.div 
-              className="flex-1 flex items-center justify-center w-full h-full overflow-hidden"
-              drag
-              dragConstraints={{ left: -300, right: 300, top: -300, bottom: 300 }}
-              dragElastic={0.1}
-            >
+            {/* 2. Rasm qismi (Pinch-zoom uchun qulay) */}
+            <div className="flex-1 flex items-center justify-center w-full h-full overflow-auto touch-pan-x touch-pan-y cursor-zoom-in">
               <img
                 src={message.file_url}
                 alt="Full view"
-                className="max-w-full max-h-[90vh] object-contain cursor-grab active:cursor-grabbing touch-none"
+                className="max-w-full h-auto object-contain p-4"
                 onClick={(e) => e.stopPropagation()}
               />
-            </motion.div>
+            </div>
 
-            {/* Footer - Yuklab olish */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+            {/* 3. Footer (Yuklab olish tugmasi) */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center z-[100] bg-gradient-to-t from-black/80 to-transparent">
               <button 
                 onClick={handleDownload}
                 disabled={isDownloading}
-                className="flex items-center gap-2 px-8 py-4 bg-[#007aff] text-white font-bold rounded-full shadow-xl hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-2 px-8 py-3.5 bg-[#007aff] text-white font-bold rounded-full shadow-xl hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50"
               >
                 <Download size={20} />
                 {isDownloading ? 'Yuklanmoqda...' : 'Yuklab olish'}
