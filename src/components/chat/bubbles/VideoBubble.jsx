@@ -1,217 +1,100 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Pause, X, Maximize2, Loader2, Volume2, VolumeX } from 'lucide-react';
 import BaseBubble from './BaseBubble';
-import { formatDuration } from '../../../utils/formatters';
-import { useSelector } from 'react-redux';
 
-const VideoPlayer = ({ url, fileName, fileSize, duration: msgDuration, isMe }) => {
-  const videoRef  = useRef(null);
-  const wrapRef   = useRef(null);
+const VideoViewer = ({ url, onClose }) => {
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const [isPlaying,     setIsPlaying]     = useState(false);
-  const [isMuted,       setIsMuted]       = useState(false);
-  const [currentTime,   setCurrentTime]   = useState(0);
-  const [duration,      setDuration]      = useState(msgDuration || 0);
-  const [showControls,  setShowControls]  = useState(false);
-  const [isFullscreen,  setIsFullscreen]  = useState(false);
-  const [isLoaded,      setIsLoaded]      = useState(false);
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
-  
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const onMeta    = () => { setDuration(video.duration || msgDuration || 0); setIsLoaded(true); };
-    const onTime    = () => setCurrentTime(video.currentTime);
-    const onEnded   = () => { setIsPlaying(false); setCurrentTime(0); };
-
-    video.addEventListener('loadedmetadata', onMeta);
-    video.addEventListener('timeupdate', onTime);
-    video.addEventListener('ended', onEnded);
-
-    const onFSChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', onFSChange);
-
-    return () => {
-      video.removeEventListener('loadedmetadata', onMeta);
-      video.removeEventListener('timeupdate', onTime);
-      video.removeEventListener('ended', onEnded);
-      document.removeEventListener('fullscreenchange', onFSChange);
-    };
-  }, [url, msgDuration]);
-
-  const togglePlay = useCallback(async () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (isPlaying) {
-      video.pause();
-      setIsPlaying(false);
-    } else {
-      await video.play();
+  const togglePlay = () => {
+    if (videoRef.current.paused) {
+      videoRef.current.play();
       setIsPlaying(true);
-    }
-  }, [isPlaying]);
-
-  const toggleMute = useCallback((e) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !isMuted;
-    setIsMuted(!isMuted);
-  }, [isMuted]);
-
-  const handleSeek = useCallback((e) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video || !duration) return;
-    const rect  = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    video.currentTime = ratio * duration;
-  }, [duration]);
-
-  const handleFullscreen = useCallback((e) => {
-    e.stopPropagation();
-    const container = wrapRef.current;
-    if (!container) return;
-    if (!document.fullscreenElement) {
-      container.requestFullscreen?.();
     } else {
-      document.exitFullscreen?.();
+      videoRef.current.pause();
+      setIsPlaying(false);
     }
-  }, []);
-
-  const controlBg    = 'bg-black/50 backdrop-blur-sm';
-  const progressFill = isMe ? '#fff' : '#60a5fa';
+  };
 
   return (
-    // ANTI-COPY xususiyatlari qo'shildi
-    <div 
-      className="px-0 pt-0 pb-0 select-none"
-      onContextMenu={(e) => e.preventDefault()}
-      style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[99999] bg-black flex items-center justify-center"
+      onClick={onClose}
     >
-      <div
-        ref={wrapRef}
-        className="relative overflow-hidden bg-black cursor-pointer select-none"
-        style={{ borderRadius: '14px 14px 0 0', maxWidth: 280, aspectRatio: '16/9' }}
-        onClick={togglePlay}
-        onMouseEnter={() => setShowControls(true)}
-        onMouseLeave={() => setShowControls(false)}
+      {/* Yopish tugmasi */}
+      <button 
+        onClick={onClose}
+        className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all z-50"
       >
+        <X size={24} />
+      </button>
+
+      {/* Video pleyer */}
+      <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
         <video
           ref={videoRef}
           src={url}
+          className="max-w-full max-h-[85vh] object-contain"
           playsInline
-          preload="metadata"
-          className="w-full h-full object-cover pointer-events-none"
+          onClick={togglePlay}
         />
-
-        <div
-          className={[
-            'absolute inset-0 flex items-center justify-center',
-            'transition-opacity duration-200 pointer-events-none',
-            isPlaying && !showControls ? 'opacity-0' : 'opacity-100',
-          ].join(' ')}
-        >
-          {(!isPlaying || showControls) && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          )}
-
-          <div
-            className={[
-              'relative z-10 w-14 h-14 rounded-full flex items-center justify-center pointer-events-auto',
-              controlBg,
-              'transition-all duration-200',
-              isPlaying && !showControls ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
-            ].join(' ')}
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePlay();
-            }}
+        
+        {/* Markaziy Play tugmasi */}
+        {!isPlaying && (
+          <button 
+            onClick={togglePlay}
+            className="absolute w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-all"
           >
-            {isPlaying
-              ? <Pause  size={22} fill="white" className="text-white" />
-              : <Play   size={22} fill="white" className="text-white ml-0.5" />
-            }
-          </div>
-        </div>
-
-        {!isPlaying && !isLoaded && msgDuration && (
-          <div className="absolute bottom-2 left-2 z-10 pointer-events-none">
-            <span className={`text-[11px] font-semibold text-white/80 ${controlBg} px-2 py-0.5 rounded-full`}>
-              {formatDuration(msgDuration)}
-            </span>
-          </div>
-        )}
-
-        {(showControls || isPlaying) && (
-          <div
-            className="absolute bottom-0 left-0 right-0 z-10 px-2 pb-2 pt-6 pointer-events-auto"
-            style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="relative h-1 rounded-full cursor-pointer mb-2 overflow-hidden"
-              style={{ background: 'rgba(255,255,255,0.2)' }}
-              onClick={handleSeek}
-            >
-              <div
-                className="absolute left-0 top-0 h-full rounded-full transition-all duration-100"
-                style={{ width: `${progress}%`, background: progressFill }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-white/70 tabular-nums font-medium pointer-events-none">
-                {formatDuration(currentTime)} / {formatDuration(duration)}
-              </span>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={toggleMute}
-                  className={`w-6 h-6 rounded-full ${controlBg} flex items-center justify-center text-white hover:bg-black/70 transition-colors`}
-                >
-                  {isMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
-                </button>
-                <button
-                  onClick={handleFullscreen}
-                  className={`w-6 h-6 rounded-full ${controlBg} flex items-center justify-center text-white hover:bg-black/70 transition-colors`}
-                >
-                  <Maximize2 size={11} />
-                </button>
-              </div>
-            </div>
-          </div>
+            <Play size={40} fill="white" className="text-white ml-2" />
+          </button>
         )}
       </div>
-
-      {fileName && (
-        <div className="px-3 py-1 pointer-events-none">
-          <p className={`text-[11px] truncate ${isMe ? 'text-white/50' : 'text-slate-500'}`}>
-            {fileName}
-          </p>
-        </div>
-      )}
-    </div>
+    </motion.div>
   );
 };
 
 const VideoBubble = (props) => {
   const { message } = props;
-  const currentUser = useSelector((s) => s.auth.user);
-  const isMe = message?.user_id === currentUser?.id;
+  const [showViewer, setShowViewer] = useState(false);
 
   return (
-    <BaseBubble {...props}>
-      <VideoPlayer
-        url={message.file_url}
-        fileName={message.file_name}
-        fileSize={message.file_size}
-        duration={message.duration}
-        isMe={isMe}
-      />
-    </BaseBubble>
+    <>
+      <BaseBubble {...props}>
+        <div 
+          className="relative overflow-hidden cursor-pointer group rounded-xl"
+          onClick={() => setShowViewer(true)}
+          onContextMenu={(e) => e.preventDefault()}
+          style={{ maxWidth: 280, WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+        >
+          {/* Video poster (thumbnail) */}
+          <div className="relative aspect-video bg-black flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
+               <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                 <Play size={20} fill="white" className="text-white ml-1" />
+               </div>
+            </div>
+            {/* Videoni oddiy rasm kabi ko'rsatib turamiz */}
+            <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-0.5 rounded-md text-[10px] text-white font-bold uppercase">
+              Video
+            </div>
+          </div>
+          
+          {message.content && (
+            <div className="px-3 py-2 text-[15px] text-white/90 bg-[#1c1c1e]">
+              {message.content}
+            </div>
+          )}
+        </div>
+      </BaseBubble>
+
+      <AnimatePresence>
+        {showViewer && <VideoViewer url={message.file_url} onClose={() => setShowViewer(false)} />}
+      </AnimatePresence>
+    </>
   );
 };
 
