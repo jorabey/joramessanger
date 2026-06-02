@@ -8,6 +8,7 @@ const ImageBubble = (props) => {
   const [showViewer, setShowViewer] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Rasmni yuklab olish
   const handleDownload = async (e) => {
     e.stopPropagation();
     setIsDownloading(true);
@@ -31,18 +32,17 @@ const ImageBubble = (props) => {
 
   return (
     <>
-      {/* Asosiy Bubble */}
       <BaseBubble {...props}>
         <div 
-          className="relative flex flex-col cursor-pointer group rounded-xl overflow-hidden"
+          className="relative flex flex-col cursor-pointer group rounded-xl overflow-hidden select-none"
           onClick={() => setShowViewer(true)}
           onContextMenu={(e) => e.preventDefault()}
-          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
         >
+          {/* Rasm maydoni */}
           <div className="relative flex items-center justify-center bg-black/10 min-h-[150px] max-h-[300px]">
             <img
               src={message.file_url}
-              alt="Chat image"
+              alt={message.file_name || 'Rasm'}
               className="max-w-[280px] sm:max-w-[320px] w-auto h-auto object-cover pointer-events-none"
               loading="lazy"
               draggable="false"
@@ -54,52 +54,52 @@ const ImageBubble = (props) => {
           </div>
           
           {message.content && (
-            <div className="px-3 py-2 text-[15px] text-white/90 break-words select-none bg-[#1c1c1e]">
+            <div className="px-3 py-2 text-[15px] text-white/90 break-words bg-[#1c1c1e]">
               {message.content}
             </div>
           )}
         </div>
       </BaseBubble>
 
-      {/* Fullscreen Viewer (Overlay) */}
+      {/* Fullscreen Overlay */}
       <AnimatePresence>
         {showViewer && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex flex-col bg-black/95 backdrop-blur-2xl"
+            className="fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center"
+            onClick={() => setShowViewer(false)}
           >
-            {/* Header: Faqat Yopish tugmasi */}
-            <div className="flex items-center justify-between p-4 z-50">
-              <span className="text-white/50 text-sm font-medium ml-2">Rasm</span>
+            {/* Top Header: Yopish va Yuklab olish tugmalari */}
+            <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-50 bg-gradient-to-b from-black/80 to-transparent">
+              <button 
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"
+              >
+                <Download size={24} />
+              </button>
+              
               <button 
                 onClick={() => setShowViewer(false)}
-                className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all active:scale-90"
+                className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"
               >
                 <X size={24} />
               </button>
             </div>
 
-            {/* Rasm maydoni: Markazda tiniq ko'rinishi uchun */}
-            <div className="flex-1 flex items-center justify-center p-2 overflow-hidden">
+            {/* Rasm qismi (Hech qayerga qochmaydi) */}
+            <div 
+              className="w-full h-full flex items-center justify-center overflow-auto p-4"
+              onClick={(e) => e.stopPropagation()} // Ichkarini bossa yopilmasin
+            >
               <img
                 src={message.file_url}
                 alt="Full view"
-                className="max-w-full max-h-full object-contain"
+                className="max-w-full h-auto object-contain"
+                style={{ maxHeight: 'calc(100vh - 100px)' }} // Tugmalar uchun joy qoldiramiz
               />
-            </div>
-
-            {/* Footer: Yuklab olish tugmasi */}
-            <div className="p-6 pb-8 flex justify-center z-50">
-              <button 
-                onClick={handleDownload}
-                disabled={isDownloading}
-                className="flex items-center gap-3 px-10 py-4 bg-[#007aff] text-white font-bold rounded-2xl shadow-[0_10px_20px_rgba(0,122,255,0.3)] hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50"
-              >
-                <Download size={20} />
-                {isDownloading ? 'Yuklanmoqda...' : 'Yuklab olish'}
-              </button>
             </div>
           </motion.div>
         )}
