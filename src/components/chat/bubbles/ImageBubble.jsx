@@ -8,7 +8,6 @@ const ImageBubble = (props) => {
   const [showViewer, setShowViewer] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Rasmni yuklab olish
   const handleDownload = async (e) => {
     e.stopPropagation();
     setIsDownloading(true);
@@ -38,16 +37,14 @@ const ImageBubble = (props) => {
           onClick={() => setShowViewer(true)}
           onContextMenu={(e) => e.preventDefault()}
         >
-          {/* Rasm maydoni */}
           <div className="relative flex items-center justify-center bg-black/10 min-h-[150px] max-h-[300px]">
             <img
               src={message.file_url}
-              alt={message.file_name || 'Rasm'}
+              alt="Chat image"
               className="max-w-[280px] sm:max-w-[320px] w-auto h-auto object-cover pointer-events-none"
               loading="lazy"
               draggable="false"
             />
-            {/* Hover effekti */}
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Maximize2 className="text-white" size={32} />
             </div>
@@ -68,38 +65,41 @@ const ImageBubble = (props) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4"
             onClick={() => setShowViewer(false)}
           >
-            {/* Top Header: Yopish va Yuklab olish tugmalari */}
-            <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-50 bg-gradient-to-b from-black/80 to-transparent">
-              <button 
-                onClick={handleDownload}
-                disabled={isDownloading}
-                className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"
-              >
-                <Download size={24} />
-              </button>
-              
-              <button 
-                onClick={() => setShowViewer(false)}
-                className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Rasm qismi (Hech qayerga qochmaydi) */}
+            {/* Rasm va tugmalar konteyneri (Rasm atrofida "yopishtirilgan" tugmalar) */}
             <div 
-              className="w-full h-full flex items-center justify-center overflow-auto p-4"
-              onClick={(e) => e.stopPropagation()} // Ichkarini bossa yopilmasin
+              className="relative inline-block max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()} 
             >
               <img
                 src={message.file_url}
                 alt="Full view"
-                className="max-w-full h-auto object-contain"
-                style={{ maxHeight: 'calc(100vh - 100px)' }} // Tugmalar uchun joy qoldiramiz
+                className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
               />
+
+              {/* TUGMALAR: Rasmni o'ziga yopishtirilgan */}
+              <div className="absolute -top-3 -right-3 flex gap-2">
+                {/* Yopish */}
+                <button 
+                  onClick={() => setShowViewer(false)}
+                  className="p-3 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-black/70 transition-all active:scale-90 border border-white/10"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="absolute -bottom-3 -left-3">
+                {/* Yuklab olish */}
+                <button 
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className="p-3 bg-blue-600 rounded-full text-white hover:bg-blue-500 transition-all active:scale-90 shadow-lg border border-white/10"
+                >
+                  <Download size={20} />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
