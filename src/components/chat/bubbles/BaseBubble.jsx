@@ -26,9 +26,9 @@ const ContextMenuOverlay = ({
   if (!isOpen) return null;
 
   const menuItems = [
-    canReply && { icon: CornerUpLeft, label: 'Javob berish', action: onReply, color: 'text-white' },
-    message.content && { icon: Copy, label: 'Nusxa olish', action: onCopy, color: 'text-white' },
-    (isMe && canSeeViewersGroup) && { icon: Eye, label: "Ko'rganlar", action: onViewers, color: 'text-white' },
+    canReply && { icon: CornerUpLeft, label: 'Javob berish', action: onReply, color: 'text-neutral-900 dark:text-white' },
+    message.content && { icon: Copy, label: 'Nusxa olish', action: onCopy, color: 'text-neutral-900 dark:text-white' },
+    (isMe && canSeeViewersGroup) && { icon: Eye, label: "Ko'rganlar", action: onViewers, color: 'text-neutral-900 dark:text-white' },
     (canEdit && isMe) && { icon: Pencil, label: 'Tahrirlash', action: onEdit, color: 'text-[#007aff]' },
     canDelete && { icon: Trash2, label: "O'chirish", action: onDelete, color: 'text-red-500' },
   ].filter(Boolean);
@@ -41,7 +41,7 @@ const ContextMenuOverlay = ({
         animate={{ opacity: 1, backdropFilter: "blur(8px)" }} 
         exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
         transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-black/30" 
+        className="absolute inset-0 bg-black/20 dark:bg-black/40" 
       />
 
       <div className="relative z-10 w-full h-full pointer-events-none">
@@ -59,7 +59,7 @@ const ContextMenuOverlay = ({
             width: position.bubbleWidth,
             transformOrigin: isMe ? 'right center' : 'left center'
           }}
-          onClick={(e) => e.stopPropagation()} // Xabarni bosganda menyu yopilmasligi uchun
+          onClick={(e) => e.stopPropagation()}
         >
           {children}
         </motion.div>
@@ -79,9 +79,9 @@ const ContextMenuOverlay = ({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Reaksiyalar qatori (Ruxsat bo'lsagina chiqadi) */}
+          {/* Reaksiyalar qatori (Oq/Qora rejimga moslashgan) */}
           {canReactGroup && (
-            <div className="flex items-center justify-between bg-[#1c1c1e]/80 backdrop-blur-2xl px-3 py-2.5 rounded-full border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.4)]">
+            <div className="flex items-center justify-between bg-white/90 dark:bg-[#1c1c1e]/80 backdrop-blur-2xl px-3 py-2.5 rounded-full border border-neutral-200 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] transition-colors duration-300">
               {REACTIONS.map((emoji) => (
                 <button
                   key={emoji}
@@ -96,12 +96,12 @@ const ContextMenuOverlay = ({
 
           {/* Menyu tugmalari */}
           {menuItems.length > 0 && (
-            <div className="bg-[#1c1c1e]/80 backdrop-blur-2xl rounded-2xl overflow-hidden border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.4)] flex flex-col">
+            <div className="bg-white/90 dark:bg-[#1c1c1e]/80 backdrop-blur-2xl rounded-2xl overflow-hidden border border-neutral-200 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] flex flex-col transition-colors duration-300">
               {menuItems.map((item, idx) => (
                 <button
                   key={item.label}
                   onClick={() => { item.action(); onClose(); }}
-                  className={`flex items-center justify-between px-4 py-3.5 text-[15px] font-medium hover:bg-white/10 active:bg-white/20 transition-colors ${item.color} ${idx !== 0 ? 'border-t border-white/5' : ''}`}
+                  className={`flex items-center justify-between px-4 py-3.5 text-[15px] font-medium hover:bg-neutral-100 dark:hover:bg-white/10 active:bg-neutral-200 dark:active:bg-white/20 transition-colors duration-200 ${item.color} ${idx !== 0 ? 'border-t border-neutral-100 dark:border-white/5' : ''}`}
                 >
                   {item.label} <item.icon size={18} strokeWidth={2.5} />
                 </button>
@@ -123,10 +123,9 @@ const BaseBubble = (props) => {
   const dispatch = useDispatch();
   const currentUser = useSelector(selectUser);
   
-  // Ruxsatlarni olish
-  const { canDeleteMessage, canBlockUsers } = usePermissions(); // Guruh qoidalariga qarab kengaytirish mumkin
+  const { canDeleteMessage } = usePermissions();
   const canReactGroup = message.group_settings?.allow_reactions ?? true; 
-  const canSeeViewersGroup = true; // Buni Global guruh settingsdan olishingiz mumkin
+  const canSeeViewersGroup = true;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuData, setMenuData] = useState({});
@@ -140,16 +139,14 @@ const BaseBubble = (props) => {
   const isDeleted = message.is_deleted_for_all;
   const fullName = message.profiles ? `${message.profiles.first_name ?? ''} ${message.profiles.last_name ?? ''}`.trim() : 'Foydalanuvchi';
 
-  // Menyuni dinamik ochish logikasi (Ekrandan chiqib ketmaslik)
   const handleOpenMenu = useCallback(() => {
     if (isDeleted) return;
-    if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(50);
 
     const rect = bubbleRef.current.getBoundingClientRect();
-    const menuHeightEstimate = 250; // Menyu balandligi taxminan
+    const menuHeightEstimate = 250;
     const isBottomSpace = (window.innerHeight - rect.bottom) > menuHeightEstimate;
     
-    // O'lchamlarni saqlash va scale effect uchun margin qoldirish
     setMenuData({
       bubbleTop: rect.top,
       bubbleLeft: rect.left,
@@ -161,7 +158,6 @@ const BaseBubble = (props) => {
     setMenuOpen(true);
   }, [isDeleted]);
 
-  // Touch Event Handlers (Scroll paytida menyu ochilib ketmasligi uchun)
   const onTouchStart = () => {
     isMovedRef.current = false;
     longPressTimer.current = setTimeout(() => {
@@ -179,7 +175,7 @@ const BaseBubble = (props) => {
   if (isDeleted) {
     return (
       <div className={`flex items-end gap-2 px-3 py-1 ${isMe ? 'flex-row-reverse' : ''}`}>
-        <div className="px-3 py-1.5 rounded-[14px] text-[12px] font-medium text-white/40 border border-white/5 bg-white/5 flex items-center gap-1.5">
+        <div className="px-3 py-1.5 rounded-[14px] text-[12px] font-medium text-neutral-400 dark:text-white/40 border border-neutral-200 dark:border-white/5 bg-neutral-50 dark:bg-white/5 flex items-center gap-1.5 transition-colors duration-300">
           <Trash2 size={12} className="opacity-60" /> Xabar o'chirildi
         </div>
       </div>
@@ -188,16 +184,18 @@ const BaseBubble = (props) => {
 
   const bubbleContent = (
     <div
-      className={`relative overflow-hidden shadow-sm transition-all ${
-        isMe ? 'bg-[#007aff] text-white rounded-[20px] rounded-br-sm' : 'bg-[#262628] text-white rounded-[20px] rounded-bl-sm border border-white/5'
+      className={`relative overflow-hidden shadow-sm transition-all duration-300 ${
+        isMe 
+          ? 'bg-[#007aff] text-white rounded-[20px] rounded-br-sm' 
+          : 'bg-[#e9e9eb] dark:bg-[#262628] text-neutral-900 dark:text-white rounded-[20px] rounded-bl-sm border border-neutral-200/50 dark:border-white/5'
       }`}
     >
       {children}
       <div className={`flex items-center gap-1.5 px-3 pb-1.5 pt-0.5 opacity-70 ${isMe ? 'justify-end' : 'justify-start'}`}>
-        <span className="text-[10px] font-medium tabular-nums">{formatMessageTime(message.created_at)}</span>
+        <span className={`text-[10px] font-medium tabular-nums ${isMe ? 'text-white/80' : 'text-neutral-500 dark:text-white/60'}`}>{formatMessageTime(message.created_at)}</span>
         {isMe && (
           <div className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setViewersOpen(true); }}>
-            {(message.reads?.length > 0) ? <CheckCheck size={14} className="text-[#89CFF0]" /> : <Check size={14} />}
+            {(message.reads?.length > 0) ? <CheckCheck size={14} className="text-[#89CFF0]" /> : <Check size={14} className="text-white/80" />}
           </div>
         )}
       </div>
@@ -228,7 +226,7 @@ const BaseBubble = (props) => {
           {/* NAME & ROLE */}
           {!isMe && showName && (
             <div className="flex items-center gap-1.5 mb-1 ml-1 cursor-pointer active:opacity-70 transition-opacity" onClick={() => onUserClick?.()}>
-              <span className="text-[12px] font-semibold text-[#89CFF0]">{fullName}</span>
+              <span className="text-[12px] font-semibold text-[#007aff] dark:text-[#89CFF0]">{fullName}</span>
               {role === 'owner' && <span className="text-[9px] font-bold bg-amber-500/15 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 uppercase tracking-wide">Asoschi</span>}
               {role === 'admin' && <span className="text-[9px] font-bold bg-[#007aff]/15 text-[#007aff] px-1.5 py-0.5 rounded border border-[#007aff]/20 uppercase tracking-wide">Admin</span>}
             </div>
@@ -237,9 +235,9 @@ const BaseBubble = (props) => {
           {/* REPLY PREVIEW */}
           {message.reply_message && (
             <div className="w-full mb-1 cursor-pointer active:scale-[0.98] transition-transform" onClick={() => onScrollToMessage(message.reply_message.id)}>
-              <div className="bg-white/10 backdrop-blur-sm border-l-[3px] border-[#89CFF0] px-2.5 py-1.5 rounded-lg text-[12px] truncate overflow-hidden">
-                <p className="font-bold text-[#89CFF0] mb-0.5">{message.reply_message.profiles?.first_name}</p>
-                <p className="truncate text-white/80 text-[11px]">{message.reply_message.content}</p>
+              <div className="bg-neutral-100 dark:bg-white/10 backdrop-blur-sm border-l-[3px] border-[#007aff] dark:border-l-[#89CFF0] px-2.5 py-1.5 rounded-lg text-[12px] truncate overflow-hidden transition-colors duration-300">
+                <p className="font-bold text-[#007aff] dark:text-[#89CFF0] mb-0.5">{message.reply_message.profiles?.first_name}</p>
+                <p className="truncate text-neutral-600 dark:text-white/80 text-[11px] transition-colors duration-300">{message.reply_message.content}</p>
               </div>
             </div>
           )}
@@ -253,9 +251,9 @@ const BaseBubble = (props) => {
                 <motion.div 
                   initial={{ scale: 0 }} animate={{ scale: 1 }}
                   key={emoji} 
-                  className="bg-[#1c1c1e] border border-white/10 rounded-full px-1.5 py-0.5 text-[11px] flex items-center gap-1 shadow-sm backdrop-blur-md"
+                  className="bg-white dark:bg-[#1c1c1e] border border-neutral-200 dark:border-white/10 rounded-full px-1.5 py-0.5 text-[11px] flex items-center gap-1 shadow-sm backdrop-blur-md transition-colors duration-300"
                 >
-                  {emoji} <span className="font-bold text-white/90">{count}</span>
+                  {emoji} <span className="font-bold text-neutral-700 dark:text-white/90 transition-colors duration-300">{count}</span>
                 </motion.div>
               ))}
             </div>
@@ -285,7 +283,6 @@ const BaseBubble = (props) => {
             onViewers={() => setViewersOpen(true)}
           >
             <div className={isMe ? 'flex flex-col items-end' : 'flex flex-col items-start'}>
-               {/* Fokus qilinganda xuddi shu xabar ustma-ust chiqadi */}
                {bubbleContent}
             </div>
           </ContextMenuOverlay>
