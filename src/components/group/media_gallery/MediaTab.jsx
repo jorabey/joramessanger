@@ -1,14 +1,8 @@
 // ==========================================
 // MediaTab.jsx — Rasmlar va Videolar galereyasi
 // ==========================================
-// - 3 ustunli grid (Telegram kabi)
-// - Rasm: to'liq ekranda ochish (lightbox)
-// - Video: inline player overlay
-// - Lazy loading
-// - Yuklanish skeleton
-// ==========================================
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../../config/supabaseClient';
 import { Play, X, ChevronLeft, ChevronRight, Download, ZoomIn } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,7 +17,6 @@ const Lightbox = ({ items, startIndex, onClose }) => {
   const [current, setCurrent] = useState(startIndex);
   const item = items[current];
 
-  // Klaviatura navigatsiyasi
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'ArrowLeft')  setCurrent((i) => Math.max(0, i - 1));
@@ -43,13 +36,10 @@ const Lightbox = ({ items, startIndex, onClose }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.95)' }}
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-sm"
     >
-      {/* Backdrop bosish — yopish */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      {/* Yopish tugmasi */}
       <button
         onClick={onClose}
         className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
@@ -57,7 +47,6 @@ const Lightbox = ({ items, startIndex, onClose }) => {
         <X size={20} />
       </button>
 
-      {/* Navigatsiya: chap */}
       {current > 0 && (
         <button
           onClick={() => setCurrent((i) => i - 1)}
@@ -67,7 +56,6 @@ const Lightbox = ({ items, startIndex, onClose }) => {
         </button>
       )}
 
-      {/* Navigatsiya: o'ng */}
       {current < items.length - 1 && (
         <button
           onClick={() => setCurrent((i) => i + 1)}
@@ -77,7 +65,6 @@ const Lightbox = ({ items, startIndex, onClose }) => {
         </button>
       )}
 
-      {/* Media */}
       <motion.div
         key={current}
         initial={{ opacity: 0, scale: 0.92 }}
@@ -87,23 +74,12 @@ const Lightbox = ({ items, startIndex, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {isVideo ? (
-          <video
-            src={item.file_url}
-            controls
-            autoPlay
-            className="max-w-full max-h-[85vh] rounded-xl object-contain"
-          />
+          <video src={item.file_url} controls autoPlay className="max-w-full max-h-[85vh] rounded-xl object-contain" />
         ) : (
-          <img
-            src={item.file_url}
-            alt={item.file_name ?? ''}
-            className="max-w-full max-h-[85vh] rounded-xl object-contain"
-            draggable={false}
-          />
+          <img src={item.file_url} alt={item.file_name ?? ''} className="max-w-full max-h-[85vh] rounded-xl object-contain" draggable={false} />
         )}
       </motion.div>
 
-      {/* Pastda: sana + yuklab olish */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
         <span className="text-xs text-white/50">{formatMessageTime(item.created_at)}</span>
         <a
@@ -117,7 +93,6 @@ const Lightbox = ({ items, startIndex, onClose }) => {
         </a>
       </div>
 
-      {/* Sahifa raqami */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 text-xs text-white/40 z-10">
         {current + 1} / {items.length}
       </div>
@@ -131,7 +106,7 @@ const Lightbox = ({ items, startIndex, onClose }) => {
 const GridSkeleton = () => (
   <div className="grid grid-cols-3 gap-0.5 p-0.5">
     {Array.from({ length: 12 }).map((_, i) => (
-      <div key={i} className="aspect-square bg-white/6 animate-pulse" />
+      <div key={i} className="aspect-square bg-neutral-200 dark:bg-white/6 animate-pulse transition-colors" />
     ))}
   </div>
 );
@@ -167,10 +142,10 @@ const MediaTab = () => {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center">
-          <ZoomIn size={22} className="text-slate-600" />
+        <div className="w-14 h-14 rounded-full bg-neutral-100 dark:bg-white/5 flex items-center justify-center transition-colors">
+          <ZoomIn size={22} className="text-neutral-400 dark:text-slate-600 transition-colors" />
         </div>
-        <p className="text-sm text-slate-500">Rasm va video yo'q</p>
+        <p className="text-sm text-neutral-500 dark:text-slate-500 transition-colors">Rasm va video yo'q</p>
       </div>
     );
   }
@@ -184,7 +159,7 @@ const MediaTab = () => {
             <button
               key={item.id}
               onClick={() => setLightboxIdx(idx)}
-              className="relative aspect-square overflow-hidden bg-white/5 group"
+              className="relative aspect-square overflow-hidden bg-neutral-100 dark:bg-white/5 group transition-colors"
             >
               {isVideo ? (
                 <>
