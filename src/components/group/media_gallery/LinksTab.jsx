@@ -1,10 +1,6 @@
 // ==========================================
 // LinksTab.jsx — Guruhda yuborilgan havolalar
 // ==========================================
-// - link_metadata dan sarlavha, rasm, domain
-// - Telegram "Links" tab uslubi
-// - Bosilsa yangi tabda ochiladi
-// ==========================================
 
 import { useState, useEffect } from 'react';
 import { Link2, ExternalLink } from 'lucide-react';
@@ -31,10 +27,10 @@ const LinkCard = ({ item }) => {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-start gap-3 px-4 py-3 hover:bg-white/4 transition-colors rounded-xl group no-underline"
+      className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-200 dark:hover:bg-white/5 transition-colors rounded-xl group no-underline"
     >
       {/* Thumbnail yoki placeholder */}
-      <div className="shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-white/6 flex items-center justify-center">
+      <div className="shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-neutral-200 dark:bg-white/6 flex items-center justify-center transition-colors">
         {img ? (
           <img
             src={img}
@@ -44,28 +40,28 @@ const LinkCard = ({ item }) => {
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         ) : (
-          <Link2 size={20} className="text-slate-600" />
+          <Link2 size={20} className="text-neutral-500 dark:text-slate-600" />
         )}
       </div>
 
       {/* Matn */}
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold text-blue-400 truncate">
+        <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 truncate">
           {publisher || domain}
         </p>
-        <p className="text-sm font-medium text-slate-200 leading-tight line-clamp-2 mt-0.5">
+        <p className="text-sm font-medium text-neutral-900 dark:text-slate-200 leading-tight line-clamp-2 mt-0.5 transition-colors">
           {title}
         </p>
         {desc && (
-          <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{desc}</p>
+          <p className="text-[11px] text-neutral-500 dark:text-slate-500 line-clamp-1 mt-0.5 transition-colors">{desc}</p>
         )}
-        <p className="text-[10px] text-slate-600 mt-1">{formatMessageTime(item.created_at)}</p>
+        <p className="text-[10px] text-neutral-500 dark:text-slate-600 mt-1 transition-colors">{formatMessageTime(item.created_at)}</p>
       </div>
 
       {/* O'ng: tashqi havola ikonkasi */}
       <ExternalLink
         size={14}
-        className="shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors mt-0.5"
+        className="shrink-0 text-neutral-400 dark:text-slate-600 group-hover:text-neutral-700 dark:group-hover:text-slate-400 transition-colors mt-0.5"
       />
     </a>
   );
@@ -105,11 +101,11 @@ const LinksTab = () => {
       <div className="flex flex-col gap-1 p-2">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex items-start gap-3 px-4 py-3">
-            <div className="w-14 h-14 rounded-xl bg-white/6 animate-pulse shrink-0" />
+            <div className="w-14 h-14 rounded-xl bg-neutral-200 dark:bg-white/6 animate-pulse shrink-0 transition-colors" />
             <div className="flex-1 flex flex-col gap-2 pt-1">
-              <div className="h-2 w-1/4 rounded bg-white/6 animate-pulse" />
-              <div className="h-3 w-3/4 rounded bg-white/8 animate-pulse" />
-              <div className="h-2 w-1/2 rounded bg-white/5 animate-pulse" />
+              <div className="h-2 w-1/4 rounded bg-neutral-200 dark:bg-white/6 animate-pulse transition-colors" />
+              <div className="h-3 w-3/4 rounded bg-neutral-300 dark:bg-white/8 animate-pulse transition-colors" />
+              <div className="h-2 w-1/2 rounded bg-neutral-200 dark:bg-white/5 animate-pulse transition-colors" />
             </div>
           </div>
         ))}
@@ -120,10 +116,10 @@ const LinksTab = () => {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center">
-          <Link2 size={22} className="text-slate-600" />
+        <div className="w-14 h-14 rounded-full bg-neutral-100 dark:bg-white/5 flex items-center justify-center transition-colors">
+          <Link2 size={22} className="text-neutral-500 dark:text-slate-600 transition-colors" />
         </div>
-        <p className="text-sm text-slate-500">Havolalar yo'q</p>
+        <p className="text-sm text-neutral-500 dark:text-slate-500 transition-colors">Havolalar yo'q</p>
       </div>
     );
   }
@@ -136,7 +132,7 @@ const LinksTab = () => {
         <button
           onClick={() => load(items.length)}
           disabled={loading}
-          className="mx-4 mt-2 mb-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-white/6 transition-all border border-white/8"
+          className="mx-4 mt-2 mb-3 py-2 rounded-xl text-xs font-medium text-neutral-500 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-white/6 transition-all border border-neutral-200 dark:border-white/8"
         >
           {loading ? 'Yuklanmoqda...' : 'Ko\'proq ko\'rish'}
         </button>
