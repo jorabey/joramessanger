@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, ChevronDown, Phone } from 'lucide-react';
@@ -39,7 +39,6 @@ const ActiveCallRoom = () => {
     ]
   };
 
-  // 1. Ekranni qotirish mantiqi
   useEffect(() => {
     if (!isOpen) return;
     const preventZoom = (e) => { if (e.touches.length > 1) e.preventDefault(); };
@@ -51,7 +50,6 @@ const ActiveCallRoom = () => {
     };
   }, [isOpen]);
 
-  // 2. To'satdan brauzer yopilganda ishtirokchini tozalash (Crash/Tab close guard)
   const handleUnexpectedLeave = useCallback(async () => {
     if (!activeCall?.id || !currentUser?.id) return;
     await supabase.from('call_participants')
@@ -65,7 +63,6 @@ const ActiveCallRoom = () => {
     return () => window.removeEventListener('beforeunload', handleUnexpectedLeave);
   }, [handleUnexpectedLeave]);
 
-  // 3. Supabase Realtime (Ishtirokchilar, Statuslar va Profillar sinxronizatsiyasi)
   useEffect(() => {
     const callId = activeCall?.id;
     if (!callId || !isOpen) return;
@@ -74,13 +71,11 @@ const ActiveCallRoom = () => {
       const { data } = await supabase.from('call_participants').select('*, profiles:user_id(id, first_name, last_name, avatar_url)').eq('call_id', callId).is('left_at', null);
       if (data) {
         dispatch(setParticipants(data));
-        // Agar hamma chiqib ketgan bo'lsa va faqat o'zi qolgan bo'lsa ham tekshiramiz
         if (data.length === 0) autoCloseCall();
       }
     };
     fetchParts();
 
-    // Xonani avtomat o'chirish
     const autoCloseCall = async () => {
       const { data } = await supabase.from('call_participants').select('id').eq('call_id', callId).is('left_at', null);
       if (!data || data.length === 0) {
@@ -97,18 +92,16 @@ const ActiveCallRoom = () => {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'call_participants', filter: `call_id=eq.${callId}` }, async (payload) => {
         if (payload.new.left_at) {
           dispatch(removeParticipant({ user_id: payload.new.user_id }));
-          setTimeout(autoCloseCall, 1000); // Kimdir chiqsa tekshiramiz, hech kim qoldimi?
+          setTimeout(autoCloseCall, 1000);
         } else if (payload.new.user_id === currentUser?.id) {
-          // O'zimizning status o'zgargan bo'lsa ham setkaga ta'sir qilmasligi kerak
         } else {
           dispatch(updateParticipantStatus({ user_id: payload.new.user_id, is_muted: payload.new.is_muted, is_video_on: payload.new.is_video_on }));
         }
       })
-      // 🔴 JONLI PROFIYAL SINXRONIZATSIYASI (Ism o'zgarganda darhol o'zgaradi)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, async (payload) => {
         const isParticipant = participants.some(p => p.user_id === payload.new.id);
         if (isParticipant) {
-          fetchParts(); // Profil yangilansa ishtirokchilarni qayta yuklaymiz
+          fetchParts();
         }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'active_calls', filter: `id=eq.${callId}` }, (payload) => {
@@ -118,7 +111,6 @@ const ActiveCallRoom = () => {
     return () => { supabase.removeChannel(channel); };
   }, [isOpen, activeCall?.id, currentUser?.id, dispatch, participants]);
 
-  // 4. WebRTC Ulanish Dvigateli
   useEffect(() => {
     if (!isOpen || !currentUser?.id || !activeCall?.id) return;
 
@@ -223,7 +215,6 @@ const ActiveCallRoom = () => {
     setRemoteStreams(prev => { const u = {...prev}; delete u[userId]; return u; });
   };
 
-  // Tugmalar va boshqaruv
   const handleToggleMute = async () => {
     const newMuted = !myStatus.is_muted;
     dispatch(toggleMyMute());
@@ -239,8 +230,6 @@ const ActiveCallRoom = () => {
   };
 
   const handleMinimizeCall = () => {
-    // 🔴 Modalni butunlay yo'qotib yopmaymiz, faqat oynani yopamiz. 
-    // CallBar fonda suzib yuradi va aloqa uzilmaydi.
     dispatch(closeCallRoom()); 
   };
 
@@ -264,71 +253,69 @@ const ActiveCallRoom = () => {
           className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-2xl flex flex-col justify-end sm:justify-center items-center"
         >
           <div className="w-full h-full flex flex-col relative">
-            {/* 🔴 iMESSAGE STYLED ADAPTIVE SPRING FRAME */}
             <motion.div 
               initial={{ y: '100%', scale: 0.92 }} 
               animate={{ y: 0, scale: 1 }} 
               exit={{ y: '100%', scale: 0.92 }} 
               transition={{ type: 'spring', damping: 26, stiffness: 240, mass: 0.8 }}
-              className="w-full max-w-5xl h-[100dvh] sm:h-[85dvh] bg-[#111112]/92 sm:rounded-[38px] flex flex-col overflow-hidden relative shadow-[0_25px_70px_rgba(0,0,0,0.7)] border border-white/10 mx-auto backdrop-blur-xl"
+              className="w-full max-w-5xl h-[100dvh] sm:h-[85dvh] bg-white dark:bg-[#111112]/92 sm:rounded-[38px] flex flex-col overflow-hidden relative shadow-2xl border border-neutral-200 dark:border-white/10 mx-auto backdrop-blur-xl transition-colors duration-300"
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 pt-12 sm:pt-6 pb-4 border-b border-white/5 bg-white/5 backdrop-blur-md z-20 sticky top-0">
+              <div className="flex items-center justify-between px-6 pt-12 sm:pt-6 pb-4 border-b border-neutral-200 dark:border-white/5 bg-neutral-100/90 dark:bg-white/5 backdrop-blur-md z-20 sticky top-0 transition-colors">
                 <div className="flex items-center gap-3">
                   <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 2, repeat: Infinity }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-                    <span className="text-[10px] font-bold text-emerald-400 tracking-wider uppercase">Jonli</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#34d399]" />
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tracking-wider uppercase">Jonli</span>
                   </motion.div>
                   <div className="flex flex-col">
-                    <span className="text-[15px] font-bold text-white tracking-tight leading-tight">Ovozli muloqot</span>
-                    <span className="text-[11px] text-slate-400 font-medium mt-0.5">{participants.length} ishtirokchi</span>
+                    <span className="text-[15px] font-bold text-neutral-900 dark:text-white tracking-tight leading-tight transition-colors">Ovozli muloqot</span>
+                    <span className="text-[11px] text-neutral-500 dark:text-slate-400 font-medium mt-0.5 transition-colors">{participants.length} ishtirokchi</span>
                   </div>
                 </div>
                 
-                {/* Pastga tushirish (Minimize) tugmasi */}
                 <motion.button 
                   whileTap={{ scale: 0.85 }}
                   onClick={handleMinimizeCall} 
-                  className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 transition-all border border-white/5 shadow-inner"
+                  className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-white/5 hover:bg-neutral-300 dark:hover:bg-white/10 flex items-center justify-center text-neutral-600 dark:text-white/80 transition-all border border-neutral-300 dark:border-white/5 shadow-inner"
                 >
                   <ChevronDown size={22} strokeWidth={2.5} />
                 </motion.button>
               </div>
 
-              {/* O'ZINGIZNING KAMERANGIZ (Picture in Picture - Drag va Silliq harakatlar) */}
+              {/* Kamera oynasi */}
               <motion.div 
                 drag dragConstraints={{ top: 0, bottom: 440, left: -220, right: 0 }}
                 whileDrag={{ scale: 1.05 }}
-                className="absolute top-24 right-6 w-[100px] h-[145px] bg-[#1a1a1c] rounded-[20px] overflow-hidden shadow-2xl border border-white/10 z-50 cursor-grab active:cursor-grabbing shadow-[0_15px_35px_rgba(0,0,0,0.5)]"
+                className="absolute top-24 right-6 w-[100px] h-[145px] bg-neutral-200 dark:bg-[#1a1a1c] rounded-[20px] overflow-hidden shadow-2xl border border-neutral-300 dark:border-white/10 z-50 cursor-grab active:cursor-grabbing"
               >
                 <video ref={el => { if (el && localStream && el.srcObject !== localStream) el.srcObject = localStream; }} autoPlay playsInline muted className={`w-full h-full object-cover scale-x-[-1] transition-opacity duration-300 ${myStatus.is_video_on ? 'opacity-100' : 'opacity-0'}`} />
                 {!myStatus.is_video_on && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#18181a]">
-                    <VideoOff size={20} className="text-slate-500 mb-1 opacity-60" />
-                    <span className="text-[10px] text-slate-400 font-semibold tracking-wide">Siz</span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-300 dark:bg-[#18181a]">
+                    <VideoOff size={20} className="text-neutral-500 dark:text-slate-500 mb-1" />
+                    <span className="text-[10px] text-neutral-500 dark:text-slate-400 font-semibold tracking-wide">Siz</span>
                   </div>
                 )}
-                {myStatus.is_muted && <div className="absolute bottom-2 right-2 bg-black/60 p-1.5 rounded-full backdrop-blur-sm border border-white/5"><MicOff size={11} className="text-red-400" /></div>}
+                {myStatus.is_muted && <div className="absolute bottom-2 right-2 bg-black/40 p-1.5 rounded-full backdrop-blur-sm border border-white/5"><MicOff size={11} className="text-red-400" /></div>}
               </motion.div>
 
               {/* ISHTIROKCHILAR SETKASI */}
-              <div className="flex-1 overflow-hidden relative bg-[#070708]">
+              <div className="flex-1 overflow-hidden relative bg-neutral-100 dark:bg-[#070708] transition-colors">
                 <ParticipantGrid remoteStreams={remoteStreams} />
               </div>
 
               {/* TUGMALAR PANELI */}
-              <div className="px-6 pt-4 pb-[calc(env(safe-area-inset-bottom)+24px)] bg-[#18181a]/90 border-t border-white/5 z-20 flex justify-center items-center gap-4 sm:gap-6 backdrop-blur-xl">
-                <motion.button whileTap={{ scale: 0.9 }} onClick={handleToggleMute} className={`w-[66px] h-[66px] rounded-[24px] shadow-md flex justify-center items-center transition-all duration-300 ${myStatus.is_muted ? 'bg-white/5 text-white border border-white/10 hover:bg-white/10' : 'bg-white text-black font-bold shadow-[0_0_25px_rgba(255,255,255,0.15)]'}`}>
+              <div className="px-6 pt-4 pb-[calc(env(safe-area-inset-bottom)+24px)] bg-white/90 dark:bg-[#18181a]/90 border-t border-neutral-200 dark:border-white/5 z-20 flex justify-center items-center gap-4 sm:gap-6 backdrop-blur-xl transition-colors">
+                <motion.button whileTap={{ scale: 0.9 }} onClick={handleToggleMute} className={`w-[66px] h-[66px] rounded-[24px] shadow-md flex justify-center items-center transition-all duration-300 ${myStatus.is_muted ? 'bg-neutral-200 dark:bg-white/5 text-neutral-900 dark:text-white border border-neutral-300 dark:border-white/10' : 'bg-neutral-900 dark:bg-white text-white dark:text-black font-bold shadow-lg'}`}>
                   {myStatus.is_muted ? <MicOff size={24} /> : <Mic size={24} />}
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.9 }} onClick={handleToggleVideo} className={`w-[66px] h-[66px] rounded-[24px] shadow-md flex justify-center items-center transition-all duration-300 ${myStatus.is_video_on ? 'bg-white text-black font-bold shadow-[0_0_25px_rgba(255,255,255,0.15)]' : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'}`}>
+                <motion.button whileTap={{ scale: 0.9 }} onClick={handleToggleVideo} className={`w-[66px] h-[66px] rounded-[24px] shadow-md flex justify-center items-center transition-all duration-300 ${myStatus.is_video_on ? 'bg-neutral-900 dark:bg-white text-white dark:text-black font-bold shadow-lg' : 'bg-neutral-200 dark:bg-white/5 text-neutral-900 dark:text-white border border-neutral-300 dark:border-white/10'}`}>
                   {myStatus.is_video_on ? <Video size={24} /> : <VideoOff size={24} />}
                 </motion.button>
-                <motion.button whileTap={{ scale: 0.9 }} onClick={handleLeave} className="w-[66px] h-[66px] rounded-[24px] bg-[#ff3b30] text-white flex justify-center items-center shadow-[0_10px_25px_rgba(255,59,48,0.35)] hover:bg-[#ff453a] transition-all">
+                <motion.button whileTap={{ scale: 0.9 }} onClick={handleLeave} className="w-[66px] h-[66px] rounded-[24px] bg-[#ff3b30] text-white flex justify-center items-center shadow-lg transition-all">
                   <PhoneOff size={24} />
                 </motion.button>
                 {canEndForAll && (
-                  <motion.button whileTap={{ scale: 0.9 }} onClick={handleEndForAll} className="w-[66px] h-[66px] rounded-[24px] bg-[#ff3b30]/10 text-[#ff453a] border border-[#ff3b30]/20 flex justify-center items-center hover:bg-[#ff3b30]/20 transition-all">
+                  <motion.button whileTap={{ scale: 0.9 }} onClick={handleEndForAll} className="w-[66px] h-[66px] rounded-[24px] bg-[#ff3b30]/10 text-[#ff3b30] border border-[#ff3b30]/20 flex justify-center items-center transition-all">
                     <Phone size={24} className="rotate-[135deg]" />
                   </motion.button>
                 )}
