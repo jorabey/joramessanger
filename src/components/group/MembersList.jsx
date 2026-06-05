@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,7 +18,7 @@ const ToggleSwitch = ({ checked, onChange, disabled }) => (
   <button
     type="button"
     onClick={() => !disabled && onChange(!checked)}
-    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none ${checked ? 'bg-emerald-500' : 'bg-white/10'} ${disabled ? 'opacity-50 cursor-wait' : 'active:scale-95'}`}
+    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none ${checked ? 'bg-emerald-500' : 'bg-neutral-300 dark:bg-white/10'} ${disabled ? 'opacity-50 cursor-wait' : 'active:scale-95'}`}
   >
     <span
       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition-transform duration-300 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`}
@@ -28,8 +28,8 @@ const ToggleSwitch = ({ checked, onChange, disabled }) => (
 
 const RoleBadge = ({ role }) => {
   const config = {
-    owner: { label: 'Asoschi', icon: Crown, cls: 'text-amber-400 bg-amber-500/15 border-amber-500/20' },
-    admin: { label: 'Admin', icon: ShieldCheck, cls: 'text-[#007aff] bg-[#007aff]/15 border-[#007aff]/20' },
+    owner: { label: 'Asoschi', icon: Crown, cls: 'text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/20' },
+    admin: { label: 'Admin', icon: ShieldCheck, cls: 'text-blue-600 dark:text-[#007aff] bg-blue-500/10 dark:bg-[#007aff]/15 border-blue-500/20 dark:border-[#007aff]/20' },
     user: { label: null, icon: null, cls: null },
   };
 
@@ -37,7 +37,7 @@ const RoleBadge = ({ role }) => {
   if (!c.label) return null;
 
   return (
-    <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${c.cls}`}>
+    <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${c.cls} transition-colors duration-300`}>
       {c.icon && <c.icon size={10} strokeWidth={2.5} />}
       {c.label}
     </span>
@@ -72,17 +72,17 @@ const PermissionsModal = ({ member, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-[340px] rounded-[24px] overflow-hidden shadow-2xl border border-white/10 bg-[#1c1c1e]/95 backdrop-blur-2xl"
+        className="relative w-full max-w-[340px] rounded-[24px] overflow-hidden shadow-2xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#1c1c1e] transition-colors duration-300"
       >
-        <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-neutral-100 dark:border-white/5 flex items-center justify-between transition-colors duration-300">
           <div>
-            <h3 className="text-[17px] font-bold text-white tracking-tight">Ruxsatlar</h3>
-            <p className="text-[13px] text-slate-400 truncate max-w-[200px] mt-0.5">{fullName}</p>
+            <h3 className="text-[17px] font-bold text-neutral-900 dark:text-white tracking-tight transition-colors duration-300">Ruxsatlar</h3>
+            <p className="text-[13px] text-neutral-500 dark:text-slate-400 truncate max-w-[200px] mt-0.5 transition-colors duration-300">{fullName}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 active:scale-90 transition-all">
+          <button onClick={onClose} className="p-2 rounded-full bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-500 dark:text-slate-400 active:scale-90 transition-all">
             <X size={18} />
           </button>
         </div>
@@ -90,24 +90,24 @@ const PermissionsModal = ({ member, onClose }) => {
         <div className="p-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-[10px] bg-[#007aff]/10 text-[#007aff]"><Settings2 size={18} /></div>
-              <span className="text-[15px] font-semibold text-white">Xabar yozish</span>
+              <div className="p-2 rounded-[10px] bg-blue-500/10 text-blue-600 dark:text-[#007aff]"><Settings2 size={18} /></div>
+              <span className="text-[15px] font-semibold text-neutral-900 dark:text-white transition-colors duration-300">Xabar yozish</span>
             </div>
             <ToggleSwitch disabled={loading} checked={perms.can_send_messages} onChange={(v) => handleToggle('can_send_messages', v)} />
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-[10px] bg-purple-500/10 text-purple-400"><Image size={18} /></div>
-              <span className="text-[15px] font-semibold text-white">Media yuborish</span>
+              <div className="p-2 rounded-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-400"><Image size={18} /></div>
+              <span className="text-[15px] font-semibold text-neutral-900 dark:text-white transition-colors duration-300">Media yuborish</span>
             </div>
             <ToggleSwitch disabled={loading} checked={perms.can_send_media} onChange={(v) => handleToggle('can_send_media', v)} />
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-[10px] bg-orange-500/10 text-orange-400"><Mic size={18} /></div>
-              <span className="text-[15px] font-semibold text-white">Ovozli/Video xabar</span>
+              <div className="p-2 rounded-[10px] bg-orange-500/10 text-orange-600 dark:text-orange-400"><Mic size={18} /></div>
+              <span className="text-[15px] font-semibold text-neutral-900 dark:text-white transition-colors duration-300">Ovozli/Video xabar</span>
             </div>
             <ToggleSwitch disabled={loading} checked={perms.can_send_voice_video_notes} onChange={(v) => handleToggle('can_send_voice_video_notes', v)} />
           </div>
@@ -117,7 +117,6 @@ const PermissionsModal = ({ member, onClose }) => {
   );
 };
 
-// iOS uslubidagi Bottom Sheet (Action Sheet)
 const MemberMenu = ({
   member, onClose, canPromote, canDemote, canBlock, canManagePerms,
   onPromote, onDemote, onBlock, onUnblock, onOpenPerms
@@ -128,19 +127,19 @@ const MemberMenu = ({
 
   const actions = [
     canManagePerms && !isAdmin && member.role !== 'owner' && {
-      icon: SlidersHorizontal, label: 'Ruxsatlarni sozlash', color: 'text-[#007aff]', action: onOpenPerms,
+      icon: SlidersHorizontal, label: 'Ruxsatlarni sozlash', color: 'text-neutral-900 dark:text-[#007aff]', action: onOpenPerms,
     },
     canPromote && !isAdmin && member.role === 'user' && {
-      icon: ShieldCheck, label: 'Admin qilish', color: 'text-emerald-500', action: onPromote,
+      icon: ShieldCheck, label: 'Admin qilish', color: 'text-emerald-600 dark:text-emerald-500', action: onPromote,
     },
     canDemote && isAdmin && {
-      icon: ShieldOff, label: 'Adminlikdan olish', color: 'text-orange-500', action: onDemote,
+      icon: ShieldOff, label: 'Adminlikdan olish', color: 'text-orange-600 dark:text-orange-500', action: onDemote,
     },
     canBlock && !isBlocked && member.role !== 'owner' && {
-      icon: UserX, label: 'Bloklash', color: 'text-red-500', action: onBlock,
+      icon: UserX, label: 'Bloklash', color: 'text-red-600 dark:text-red-500', action: onBlock,
     },
     canBlock && isBlocked && {
-      icon: UserCheck, label: 'Blokdan chiqarish', color: 'text-emerald-500', action: onUnblock,
+      icon: UserCheck, label: 'Blokdan chiqarish', color: 'text-emerald-600 dark:text-emerald-500', action: onUnblock,
     },
   ].filter(Boolean);
 
@@ -157,16 +156,16 @@ const MemberMenu = ({
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         className="relative w-full max-w-[380px] flex flex-col gap-2 pb-[env(safe-area-inset-bottom)]"
       >
-        <div className="bg-[#1c1c1e]/95 backdrop-blur-2xl rounded-2xl overflow-hidden shadow-2xl">
-          <div className="px-4 py-3 border-b border-white/5 text-center">
-            <span className="text-[13px] font-medium text-slate-400">{fullName}</span>
+        <div className="bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl rounded-2xl overflow-hidden shadow-2xl transition-colors duration-300">
+          <div className="px-4 py-3 border-b border-neutral-200 dark:border-white/5 text-center transition-colors duration-300">
+            <span className="text-[13px] font-medium text-neutral-500 dark:text-slate-400">{fullName}</span>
           </div>
           <div className="flex flex-col">
             {actions.map(({ icon: Icon, label, color, action }, idx) => (
               <button
                 key={label}
                 onClick={() => { action(); onClose(); }}
-                className={`w-full flex items-center justify-between px-5 py-4 text-[16px] font-semibold active:bg-white/10 transition-colors ${color} ${idx !== 0 ? 'border-t border-white/5' : ''}`}
+                className={`w-full flex items-center justify-between px-5 py-4 text-[16px] font-semibold active:bg-neutral-100 dark:active:bg-white/10 transition-colors duration-200 ${color} ${idx !== 0 ? 'border-t border-neutral-200 dark:border-white/5' : ''}`}
               >
                 {label}
                 <Icon size={20} strokeWidth={2} />
@@ -177,7 +176,7 @@ const MemberMenu = ({
 
         <button
           onClick={onClose}
-          className="w-full bg-[#1c1c1e]/95 backdrop-blur-2xl rounded-2xl px-5 py-4 text-[16px] font-bold text-white active:bg-white/10 transition-colors shadow-2xl"
+          className="w-full bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl rounded-2xl px-5 py-4 text-[16px] font-bold text-neutral-900 dark:text-white active:bg-neutral-100 dark:active:bg-white/10 transition-colors duration-300 shadow-2xl"
         >
           Bekor qilish
         </button>
@@ -230,32 +229,32 @@ const MemberRow = ({
     <>
       <div 
         onClick={() => onSelectUser(member.user_id)}
-        className={`flex z-[0] items-center gap-3 px-3 py-2.5 rounded-2xl transition-all cursor-pointer ${isBlocked ? 'opacity-60 grayscale-[50%]' : 'hover:bg-white/5 active:scale-[0.98]'}`}
+        className={`flex z-[0] items-center gap-3 px-3 py-2.5 rounded-2xl transition-all cursor-pointer ${isBlocked ? 'opacity-60 grayscale-[50%]' : 'hover:bg-neutral-200 dark:hover:bg-white/5 active:scale-[0.98]'}`}
       >
         <div className="shrink-0 relative">
           <Avatar src={profile?.avatar_url} firstName={profile?.first_name} lastName={profile?.last_name} userId={member.user_id} size="md" />
-          {isOnline && <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#1c1c1e] rounded-full" />}
+          {isOnline && <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-[#1c1c1e] rounded-full transition-colors duration-300" />}
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-[15.5px] font-bold leading-tight tracking-tight truncate ${isMe ? 'text-[#007aff]' : 'text-white'}`}>
+            <span className={`text-[15.5px] font-bold leading-tight tracking-tight truncate ${isMe ? 'text-blue-600 dark:text-[#007aff]' : 'text-neutral-900 dark:text-white'} transition-colors duration-300`}>
               {isMe ? 'Siz' : fullName}
             </span>
             <RoleBadge role={member.role} />
             {isBlocked && (
-              <span className="text-[9px] text-red-400 font-bold bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 uppercase tracking-wider">
+              <span className="text-[9px] text-red-600 dark:text-red-400 font-bold bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 uppercase tracking-wider">
                 Bloklangan
               </span>
             )}
             {!member.can_send_messages && member.role === 'user' && (
-              <span className="text-[9px] text-slate-400 font-bold bg-white/5 px-1.5 py-0.5 rounded border border-white/10 uppercase tracking-wider">
+              <span className="text-[9px] text-neutral-500 dark:text-slate-400 font-bold bg-neutral-200 dark:bg-white/5 px-1.5 py-0.5 rounded border border-neutral-300 dark:border-white/10 uppercase tracking-wider transition-colors duration-300">
                 Cheklangan
               </span>
             )}
           </div>
-          <p className="text-[12px] font-medium text-slate-500 mt-0.5 truncate">
-            {isOnline ? <span className="text-emerald-400">onlayn</span> : profile?.email ?? ''}
+          <p className="text-[12px] font-medium text-neutral-500 dark:text-slate-500 mt-0.5 truncate transition-colors duration-300">
+            {isOnline ? <span className="text-emerald-600 dark:text-emerald-400">onlayn</span> : profile?.email ?? ''}
           </p>
         </div>
 
@@ -264,7 +263,7 @@ const MemberRow = ({
             <button 
               onClick={(e) => { e.stopPropagation(); setMenuOpen(true); }} 
               disabled={loading} 
-              className={`p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-90 ${loading ? 'opacity-50 cursor-wait' : ''}`}
+              className={`p-2 rounded-full text-neutral-500 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200 dark:hover:bg-white/10 transition-all active:scale-90 ${loading ? 'opacity-50 cursor-wait' : ''}`}
             >
               {loading ? <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> : <MoreVertical size={18} />}
             </button>
@@ -301,12 +300,10 @@ const MembersList = ({ members: initialMembers = [] }) => {
   const [localMembers, setLocalMembers] = useState(initialMembers);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  // Prop orqali kelgan real-time data ni saqlaymiz
   useEffect(() => {
     setLocalMembers(initialMembers);
   }, [initialMembers]);
 
-  // Qo'shimcha ehtiyot chorasi: Local channel
   useEffect(() => {
     const channel = supabase.channel('members_list_realtime_local')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'group_members', filter: `group_id=eq.${GROUP_ID}` }, (payload) => {
@@ -349,7 +346,6 @@ const MembersList = ({ members: initialMembers = [] }) => {
     user:  { label: "A'zolar", count: groups.user.length  },
   };
 
-  // Tanlangan userni real vaqtda topish (profil modal uchun)
   const activeSelectedUser = useMemo(() => {
     if (!selectedUserId) return null;
     const member = localMembers.find(m => m.user_id === selectedUserId);
@@ -363,20 +359,19 @@ const MembersList = ({ members: initialMembers = [] }) => {
   }, [selectedUserId, localMembers, isUserOnline]);
 
   return (
-    <div className="flex flex-col h-full relative z-[51]">
-      {/* QIDIRUV (SEARCH) - Xavfsiz z-index */}
-      <div className="px-4 pt-4 pb-3 sticky top-0 bg-[#121214]/80 backdrop-blur-xl z-[999] border-b border-transparent shadow-sm">
-        <div className="flex items-center gap-2 bg-white/10 focus-within:bg-white/15 focus-within:ring-2 ring-[#007aff]/50 rounded-[14px] px-3.5 py-2.5 transition-all shadow-inner">
-          <Search size={18} className="text-slate-400 shrink-0" />
+    <div className="flex flex-col h-full relative z-[51] bg-white dark:bg-[#121214] transition-colors duration-300">
+      <div className="px-4 pt-4 pb-3 sticky top-0 bg-white/90 dark:bg-[#121214]/80 backdrop-blur-xl z-[999] border-b border-neutral-100 dark:border-transparent shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2 bg-neutral-100 dark:bg-white/10 focus-within:bg-neutral-200 dark:focus-within:bg-white/15 focus-within:ring-2 ring-blue-500/50 dark:ring-[#007aff]/50 rounded-[14px] px-3.5 py-2.5 transition-all shadow-inner">
+          <Search size={18} className="text-neutral-400 dark:text-slate-400 shrink-0 transition-colors duration-300" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="A'zolarni qidirish..."
-            className="flex-1 bg-transparent text-[15px] font-medium text-white placeholder-slate-400 outline-none caret-[#007aff]"
+            className="flex-1 bg-transparent text-[15px] font-medium text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-slate-400 outline-none caret-blue-600 dark:caret-[#007aff] transition-colors duration-300"
           />
           {search && (
-            <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} onClick={() => setSearch('')} className="p-1 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors active:scale-90">
+            <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} onClick={() => setSearch('')} className="p-1 rounded-full bg-neutral-200 dark:bg-white/20 text-neutral-600 dark:text-white hover:bg-neutral-300 dark:hover:bg-white/30 transition-colors active:scale-90">
               <X size={14} strokeWidth={2.5} />
             </motion.button>
           )}
@@ -391,12 +386,12 @@ const MembersList = ({ members: initialMembers = [] }) => {
 
           return (
             <div key={roleKey} className="mb-5">
-              <div className="flex items-center gap-2 px-3 mb-2 sticky top-0 py-1.5 bg-[#121214]/90 backdrop-blur-md z-10 rounded-lg">
-                <span className="text-[13px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
-                <span className="text-[10px] font-bold text-white/50 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{count}</span>
+              <div className="flex items-center gap-2 px-3 mb-2 sticky top-0 py-1.5 bg-white/90 dark:bg-[#121214]/90 backdrop-blur-md z-10 rounded-lg transition-colors duration-300">
+                <span className="text-[13px] font-bold text-neutral-500 dark:text-slate-500 uppercase tracking-widest transition-colors duration-300">{label}</span>
+                <span className="text-[10px] font-bold text-neutral-600 dark:text-white/50 bg-neutral-200 dark:bg-white/5 px-2 py-0.5 rounded-full border border-neutral-300 dark:border-white/5 transition-colors duration-300">{count}</span>
               </div>
 
-              <div className="flex flex-col bg-[#1c1c1e] rounded-[24px] p-1.5 shadow-sm border border-white/5">
+              <div className="flex flex-col bg-neutral-50 dark:bg-[#1c1c1e] rounded-[24px] p-1.5 shadow-sm border border-neutral-200 dark:border-white/5 transition-colors duration-300">
                 <AnimatePresence mode="popLayout">
                   {section.map((member) => {
                     const isMe = member.user_id === currentUser?.id;
@@ -425,12 +420,12 @@ const MembersList = ({ members: initialMembers = [] }) => {
 
         {filtered.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center gap-4 py-20 opacity-60">
-            <div className="w-16 h-16 rounded-full bg-white/5 border border-white/5 flex items-center justify-center shadow-inner">
-              <User size={28} className="text-slate-400" />
+            <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/5 flex items-center justify-center shadow-inner transition-colors duration-300">
+              <User size={28} className="text-neutral-400 dark:text-slate-400 transition-colors duration-300" />
             </div>
             <div className="text-center">
-              <p className="text-[16px] font-semibold text-white">Topilmadi</p>
-              <p className="text-[13px] text-slate-400 mt-1">Boshqa so'z bilan qidirib ko'ring</p>
+              <p className="text-[16px] font-semibold text-neutral-900 dark:text-white transition-colors duration-300">Topilmadi</p>
+              <p className="text-[13px] text-neutral-500 dark:text-slate-400 mt-1 transition-colors duration-300">Boshqa so'z bilan qidirib ko'ring</p>
             </div>
           </motion.div>
         )}
