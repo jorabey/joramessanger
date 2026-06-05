@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -68,13 +68,12 @@ const ChatHeader = ({
     setIsMenuOpen(false);
     try {
       await supabase.auth.signOut();
-      // Sahifa avtomatik /login ga o'tadi (App.jsx dagi auth listener orqali)
     } catch (error) {
       console.error("Chiqishda xatolik:", error);
     }
   };
 
-  const handleStartCall = useCallback(async () => {
+  const handleStartCall = React.useCallback(async () => {
     if (isCallActive || isStartingCall || !currentUser) return;
 
     setIsStartingCall(true);
@@ -113,13 +112,7 @@ const ChatHeader = ({
   return (
     <>
       <header 
-        className="relative z-40 flex items-center justify-between px-3 sm:px-5 h-[60px] sm:h-[68px] shrink-0 w-full"
-        style={{ 
-          background: 'rgba(18, 18, 20, 0.75)', 
-          backdropFilter: 'blur(30px) saturate(150%)',
-          WebkitBackdropFilter: 'blur(30px) saturate(150%)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)'
-        }}
+        className="relative z-40 flex items-center justify-between px-3 sm:px-5 h-[60px] sm:h-[68px] shrink-0 w-full bg-white/75 dark:bg-[#121214]/75 backdrop-blur-3xl saturate-150 border-b border-neutral-200 dark:border-white/10 transition-colors duration-300"
       >
         <div className="flex items-center flex-1 min-w-0 h-full overflow-hidden">
           <AnimatePresence mode="wait">
@@ -144,7 +137,7 @@ const ChatHeader = ({
                 </div>
 
                 <div className="flex flex-col min-w-0 justify-center">
-                  <h1 className="text-[16px] sm:text-[17px] font-bold text-white tracking-tight truncate leading-tight group-hover:text-[#007aff] transition-colors">
+                  <h1 className="text-[16px] sm:text-[17px] font-bold text-neutral-900 dark:text-white tracking-tight truncate leading-tight group-hover:text-[#007aff] transition-colors duration-300">
                     {groupName}
                   </h1>
                   
@@ -172,9 +165,9 @@ const ChatHeader = ({
                         {onlineCount > 0 && (
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
                         )}
-                        <span className="text-[12px] sm:text-[13px] font-medium text-slate-400 truncate">
+                        <span className="text-[12px] sm:text-[13px] font-medium text-slate-500 dark:text-slate-400 truncate transition-colors duration-300">
                           {onlineCount > 0 ? (
-                            <span className="text-emerald-400/90">{onlineCount} onlayn</span>
+                            <span className="text-emerald-500 dark:text-emerald-400/90">{onlineCount} onlayn</span>
                           ) : null}
                           {onlineCount > 0 && totalMembers > 0 && <span className="mx-1.5 opacity-50">·</span>}
                           {totalMembers > 0 ? `${totalMembers} a'zo` : ''}
@@ -190,22 +183,22 @@ const ChatHeader = ({
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: '100%' }}
                 exit={{ opacity: 0, width: 0, transition: { duration: 0.15 } }}
-                className="flex items-center flex-1 h-9 bg-white/10 rounded-[12px] px-3 border border-white/5 shadow-inner backdrop-blur-md"
+                className="flex items-center flex-1 h-9 bg-neutral-100 dark:bg-white/10 rounded-[12px] px-3 border border-neutral-200 dark:border-white/5 shadow-inner backdrop-blur-md transition-colors duration-300"
               >
-                <Search size={16} className="text-slate-400 shrink-0 mr-2" />
+                <Search size={16} className="text-slate-400 dark:text-slate-500 shrink-0 mr-2 transition-colors duration-300" />
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => dispatch(setSearchQuery(e.target.value))}
                   placeholder="Xabarlardan izlash..."
-                  className="flex-1 bg-transparent text-[15px] font-medium text-white placeholder:text-slate-400 outline-none w-full"
+                  className="flex-1 bg-transparent text-[15px] font-medium text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-slate-500 outline-none w-full transition-colors duration-300"
                 />
                 {searchQuery && (
                   <motion.button
-                    whileTap={{ scale: 0.9 }}
+                    释放Tap={{ scale: 0.9 }}
                     onClick={() => dispatch(setSearchQuery(''))}
-                    className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white shrink-0 ml-2 transition-colors"
+                    className="p-1 rounded-full bg-neutral-200 dark:bg-white/20 hover:bg-neutral-300 dark:hover:bg-white/30 text-neutral-600 dark:text-white shrink-0 ml-2 transition-colors duration-300"
                   >
                     <X size={12} strokeWidth={2.5} />
                   </motion.button>
@@ -221,7 +214,7 @@ const ChatHeader = ({
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => dispatch(toggleSearch())}
-              className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-colors ${
+              className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-colors duration-300 ${
                 isSearchOpen ? 'bg-[#007aff]/15 text-[#007aff]' : 'text-[#007aff] hover:bg-[#007aff]/15'
               }`}
             >
@@ -235,7 +228,7 @@ const ChatHeader = ({
                 whileTap={{ scale: 0.9 }}
                 onClick={handleStartCall}
                 disabled={isStartingCall}
-                className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-colors ${
+                className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-colors duration-300 ${
                   isStartingCall ? 'opacity-50 cursor-wait' : 'text-[#007aff] hover:bg-[#007aff]/15'
                 }`}
               >
@@ -254,8 +247,8 @@ const ChatHeader = ({
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-colors ${
-                    isMenuOpen ? 'bg-white/10 text-white' : 'text-[#007aff] hover:bg-[#007aff]/15'
+                  className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full transition-colors duration-300 ${
+                    isMenuOpen ? 'bg-neutral-100 dark:bg-white/10 text-neutral-900 dark:text-white' : 'text-[#007aff] hover:bg-[#007aff]/15'
                   }`}
                 >
                   <MoreVertical size={22} strokeWidth={2.2} />
@@ -269,11 +262,11 @@ const ChatHeader = ({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 10 }}
                     transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                    className="absolute right-0 top-[calc(100%+8px)] w-[220px] bg-[#1c1c1e]/90 backdrop-blur-3xl border border-white/10 rounded-[18px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col z-50 p-1.5"
+                    className="absolute right-0 top-[calc(100%+8px)] w-[220px] bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-3xl border border-neutral-200 dark:border-white/10 rounded-[18px] shadow-[0_10px_40px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col z-50 p-1.5 transition-colors duration-300"
                   >
                     <button
                       onClick={() => { setIsMenuOpen(false); setIsProfileModalOpen(true); }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[15px] font-semibold text-white hover:bg-white/10 active:scale-[0.98] transition-all"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[15px] font-semibold text-neutral-800 dark:text-white hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.98] transition-all duration-200"
                     >
                       <UserCircle size={18} className="text-[#007aff]" strokeWidth={2.5} />
                       Mening profilim
@@ -281,7 +274,7 @@ const ChatHeader = ({
                     
                     <button
                       onClick={() => { setIsMenuOpen(false); onOpenSidebar(); }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[15px] font-semibold text-white hover:bg-white/10 active:scale-[0.98] transition-all"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[15px] font-semibold text-neutral-800 dark:text-white hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.98] transition-all duration-200"
                     >
                       <Info size={18} className="text-[#007aff]" strokeWidth={2.5} />
                       Guruh ma'lumotlari
@@ -289,17 +282,17 @@ const ChatHeader = ({
 
                     <button
                       onClick={() => { setIsMenuOpen(false); setIsSettingsOpen(true); }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[15px] font-semibold text-white hover:bg-white/10 active:scale-[0.98] transition-all"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[15px] font-semibold text-neutral-800 dark:text-white hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.98] transition-all duration-200"
                     >
-                      <Settings size={18} className="text-slate-400" strokeWidth={2.5} />
+                      <Settings size={18} className="text-neutral-500 dark:text-slate-400 transition-colors duration-200" strokeWidth={2.5} />
                       Sozlamalar
                     </button>
 
-                    <div className="h-[1px] bg-white/10 my-1 mx-2" />
+                    <div className="h-[1px] bg-neutral-200 dark:bg-white/10 my-1 mx-2 transition-colors duration-300" />
 
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[15px] font-semibold text-red-500 hover:bg-red-500/15 active:scale-[0.98] transition-all"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[15px] font-semibold text-red-500 hover:bg-red-500/10 dark:hover:bg-red-500/15 active:scale-[0.98] transition-all"
                     >
                       <LogOut size={18} strokeWidth={2.5} />
                       Chiqish
