@@ -37,7 +37,8 @@ const ImageBubble = (props) => {
           onClick={() => setShowViewer(true)}
           onContextMenu={(e) => e.preventDefault()}
         >
-          <div className="relative flex items-center justify-center bg-black/10 min-h-[150px] max-h-[300px]">
+          {/* Rasm maydoni: Oq/Qora moslashuvchan */}
+          <div className="relative flex items-center justify-center bg-neutral-200 dark:bg-black/10 min-h-[150px] max-h-[300px] transition-colors duration-300">
             <img
               src={message.file_url}
               alt="Chat image"
@@ -50,25 +51,26 @@ const ImageBubble = (props) => {
             </div>
           </div>
           
+          {/* Matn qismi: Oq/Qora moslashuvchan */}
           {message.content && (
-            <div className="px-3 py-2 text-[15px] text-white/90 break-words bg-[#1c1c1e]">
+            <div className="px-3 py-2 text-[15px] text-neutral-900 dark:text-white/90 break-words bg-neutral-100 dark:bg-[#1c1c1e] transition-colors duration-300">
               {message.content}
             </div>
           )}
         </div>
       </BaseBubble>
 
-      {/* Fullscreen Overlay */}
+      {/* Fullscreen Overlay: Oq/Qora moslashuvchan */}
       <AnimatePresence>
         {showViewer && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4"
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-white/95 dark:bg-black/95 backdrop-blur-2xl p-4 transition-colors duration-300"
             onClick={() => setShowViewer(false)}
           >
-            {/* Rasm va tugmalar konteyneri (Rasm atrofida "yopishtirilgan" tugmalar) */}
+            {/* Rasm va tugmalar konteyneri */}
             <div 
               className="relative inline-block max-w-full max-h-full"
               onClick={(e) => e.stopPropagation()} 
@@ -84,7 +86,7 @@ const ImageBubble = (props) => {
                 {/* Yopish */}
                 <button 
                   onClick={() => setShowViewer(false)}
-                  className="p-3 bg-black/50 backdrop-blur-md rounded-full text-white hover:bg-black/70 transition-all active:scale-90 border border-white/10"
+                  className="p-3 bg-neutral-200/80 dark:bg-black/50 backdrop-blur-md rounded-full text-neutral-900 dark:text-white hover:bg-neutral-300 dark:hover:bg-black/70 transition-all active:scale-90 border border-neutral-300 dark:border-white/10"
                 >
                   <X size={20} />
                 </button>
