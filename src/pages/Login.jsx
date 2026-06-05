@@ -26,13 +26,13 @@ const Login = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="fixed inset-0 bg-[#000000] flex flex-col items-center justify-center z-50"
+          className="fixed inset-0 bg-white dark:bg-black flex flex-col items-center justify-center z-50 transition-colors duration-300"
           style={{ height: '100dvh' }}
         >
           <motion.div
             animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-16 h-16 bg-blue-500/20 rounded-3xl blur-xl absolute"
+            className="w-16 h-16 bg-blue-500/10 dark:bg-blue-500/20 rounded-3xl blur-xl absolute"
           />
           <Loader fullScreen={true} />
         </motion.div>
@@ -43,7 +43,7 @@ const Login = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 w-full bg-[#000000] overflow-hidden overscroll-none touch-none"
+          className="fixed inset-0 w-full bg-white dark:bg-black overflow-hidden overscroll-none touch-none transition-colors duration-300"
           style={{ height: '100dvh' }}
         >
           <LoginForm />
