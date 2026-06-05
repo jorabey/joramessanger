@@ -28,8 +28,8 @@ const getFileInfo = (mimeType = '', fileName = '') => {
   if (mime.includes('pdf') || ext === 'pdf') {
     return {
       icon: FileText,
-      color: 'text-red-400',
-      bg:    'bg-red-500/15',
+      color: 'text-red-500 dark:text-red-400',
+      bg:    'bg-red-500/10 dark:bg-red-500/15',
       label: 'PDF',
     };
   }
@@ -42,8 +42,8 @@ const getFileInfo = (mimeType = '', fileName = '') => {
   ) {
     return {
       icon: FileText,
-      color: 'text-blue-400',
-      bg:    'bg-blue-500/15',
+      color: 'text-blue-600 dark:text-blue-400',
+      bg:    'bg-blue-500/10 dark:bg-blue-500/15',
       label: 'Word',
     };
   }
@@ -56,8 +56,8 @@ const getFileInfo = (mimeType = '', fileName = '') => {
   ) {
     return {
       icon: FileSpreadsheet,
-      color: 'text-green-400',
-      bg:    'bg-green-500/15',
+      color: 'text-green-600 dark:text-green-400',
+      bg:    'bg-green-500/10 dark:bg-green-500/15',
       label: 'Excel',
     };
   }
@@ -66,8 +66,8 @@ const getFileInfo = (mimeType = '', fileName = '') => {
   if (mime.includes('text') || ext === 'txt') {
     return {
       icon: FileText,
-      color: 'text-slate-300',
-      bg:    'bg-slate-500/15',
+      color: 'text-neutral-500 dark:text-slate-300',
+      bg:    'bg-neutral-500/10 dark:bg-slate-500/15',
       label: 'TXT',
     };
   }
@@ -81,8 +81,8 @@ const getFileInfo = (mimeType = '', fileName = '') => {
   ) {
     return {
       icon: FileArchive,
-      color: 'text-amber-400',
-      bg:    'bg-amber-500/15',
+      color: 'text-amber-600 dark:text-amber-400',
+      bg:    'bg-amber-500/10 dark:bg-amber-500/15',
       label: 'Arxiv',
     };
   }
@@ -90,8 +90,8 @@ const getFileInfo = (mimeType = '', fileName = '') => {
   // Boshqa
   return {
     icon: File,
-    color: 'text-slate-400',
-    bg:    'bg-slate-500/10',
+    color: 'text-neutral-400 dark:text-slate-400',
+    bg:    'bg-neutral-500/5 dark:bg-slate-500/10',
     label: ext.toUpperCase() || 'Fayl',
   };
 };
@@ -112,7 +112,6 @@ const FilePlayer = ({ url, fileName, fileSize, mimeType, isMe }) => {
 
     setDownloading(true);
     try {
-      // fetch orqali blob sifatida yuklab, <a> trigger qilamiz
       const res  = await fetch(url);
       const blob = await res.blob();
       const href = URL.createObjectURL(blob);
@@ -136,21 +135,21 @@ const FilePlayer = ({ url, fileName, fileSize, mimeType, isMe }) => {
 
   const displayName = truncateText(fileName ?? 'Nomsiz fayl', 28);
 
-  // ---- Rang moslashuvi: isMe bo'lsa oq ——-
-  const metaColor   = isMe ? 'text-white/50'  : 'text-slate-500';
-  const nameColor   = isMe ? 'text-white/90'  : 'text-slate-100';
+  // ---- Oq va Qora rejim foni va matnlariga to'liq moslashuv ----
+  const metaColor   = isMe ? 'text-white/60' : 'text-neutral-500 dark:text-slate-500';
+  const nameColor   = isMe ? 'text-white/95' : 'text-neutral-900 dark:text-slate-100';
   const btnBg       = isMe
     ? 'bg-white/15 hover:bg-white/25 text-white'
-    : 'bg-white/8 hover:bg-white/14 text-slate-300 hover:text-white';
+    : 'bg-black/5 dark:bg-white/8 hover:bg-black/10 dark:hover:bg-white/14 text-neutral-700 dark:text-slate-300 hover:text-neutral-900 dark:hover:text-white';
 
   return (
-    <div className="px-3 pt-2.5 pb-0 min-w-[220px] max-w-[280px]">
+    <div className="px-3 pt-2.5 pb-0 min-w-[220px] max-w-[280px] transition-colors duration-300">
       <div className="flex items-center gap-3">
 
         {/* ---- Fayl ikonkasi ---- */}
-        <div className={`shrink-0 w-11 h-11 rounded-xl ${bg} flex flex-col items-center justify-center gap-0.5`}>
-          <Icon size={18} className={color} strokeWidth={1.8} />
-          <span className={`text-[8px] font-bold uppercase tracking-wide ${color} opacity-80`}>
+        <div className={`shrink-0 w-11 h-11 rounded-xl ${bg} flex flex-col items-center justify-center gap-0.5 transition-colors duration-300`}>
+          <Icon size={18} className={`${color} transition-colors duration-300`} strokeWidth={1.8} />
+          <span className={`text-[8px] font-bold uppercase tracking-wide ${color} opacity-80 transition-colors duration-300`}>
             {label}
           </span>
         </div>
@@ -158,12 +157,12 @@ const FilePlayer = ({ url, fileName, fileSize, mimeType, isMe }) => {
         {/* ---- Matn qismi ---- */}
         <div className="flex-1 flex flex-col gap-0.5 min-w-0">
           <span
-            className={`text-sm font-medium leading-tight ${nameColor}`}
+            className={`text-sm font-medium leading-tight transition-colors duration-300 ${nameColor}`}
             title={fileName}
           >
             {displayName}
           </span>
-          <span className={`text-[11px] ${metaColor}`}>
+          <span className={`text-[11px] font-medium transition-colors duration-300 ${metaColor}`}>
             {fileSize ? formatFileSize(fileSize) : ''}
             {fileSize && mimeType ? ' · ' : ''}
             {mimeType ? label : ''}
@@ -189,7 +188,7 @@ const FilePlayer = ({ url, fileName, fileSize, mimeType, isMe }) => {
               <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
             </svg>
           ) : downloaded ? (
-            <CheckCircle2 size={16} className="text-green-400" />
+            <CheckCircle2 size={16} className="text-green-500 dark:text-green-400" />
           ) : (
             <Download size={15} />
           )}
@@ -203,15 +202,12 @@ const FilePlayer = ({ url, fileName, fileSize, mimeType, isMe }) => {
 // WRAPPER (BaseBubble bilan)
 // ==========================================
 const FileBubble = (props) => {
-  // isMe ni aniqlash (FilePlayer ranglari uchun)
   const currentUser = useSelector((s) => s.auth.user);
   const { message } = props;
   const isMe = message?.user_id === currentUser?.id;
 
   return (
-    <BaseBubble
-   {...props}
-    >
+    <BaseBubble {...props}>
       <FilePlayer
         url={message.file_url}
         fileName={message.file_name}
@@ -224,15 +220,3 @@ const FileBubble = (props) => {
 };
 
 export default FileBubble;
-
-// ==========================================
-// ISHLATILISHI (USAGE):
-// ==========================================
-// <FileBubble
-//   message={message}
-//   onDelete={deleteMessage}
-//   onReact={toggleReaction}
-//   totalMembers={totalMembers}
-//   showAvatar={showAvatar}
-//   showName={showName}
-// />
