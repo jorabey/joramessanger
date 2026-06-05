@@ -21,7 +21,7 @@ const TABS = [
   { id: 'media', label: 'Media', Icon: Image },
   { id: 'files', label: 'Fayl', Icon: FileText },
   { id: 'links', label: 'Havola', Icon: Link2 },
-  { id: 'voice', label: 'Ovoz/Video', Icon: Mic },
+  { id: 'voice', label: 'Ovoz', Icon: Mic },
   { id: 'settings', label: 'Sozlamalar', Icon: Settings },
 ];
 
