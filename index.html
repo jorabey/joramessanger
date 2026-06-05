@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uz" class="dark bg-black text-white" translate="no">
+<html lang="uz" translate="no">
   <head>
     <meta charset="UTF-8" />
     <title>Jora Messenger</title>
@@ -11,6 +11,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
+
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('app_theme') || 'dark';
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
     
     <script>
       window.addEventListener('error', function(e) {
@@ -26,7 +37,7 @@
     </script>
   </head>
   
-  <body>
+  <body class="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
     <div id="root" class="w-full h-full relative"></div>
     <script>window.global = window;</script>
     <script type="module" src="/src/main.jsx"></script>
