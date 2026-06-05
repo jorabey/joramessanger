@@ -58,33 +58,31 @@ const ChatInput = ({ onSend, recorder, onTyping, groupSettings }) => {
     }
   }, [editingMessage]);
 
-  // ChatInput.jsx ichida
-const handleSend = () => {
-  if ((!text.trim() && !file) || !currentUser) return;
-  
-  // Fayl turini aniqlash
-  let msgType = 'text';
-  if (file) {
-    if (file.type.startsWith('image/')) msgType = 'image';
-    else if (file.type.startsWith('video/')) msgType = 'video';
-    else if (file.type.startsWith('audio/')) msgType = 'audio';
-    else msgType = 'file'; // Oddiy hujjatlar uchun
-  }
-  
-  onSend({
-    content: text.trim() || null,
-    messageType: msgType, // Endi bu 'image', 'video' yoki 'audio' bo'ladi
-    file: file,
-    isEdit: !!editingMessage,
-    msgId: editingMessage?.id
-  });
-  
-  setText('');
-  setFile(null);
-  dispatch(clearReplyTo());
-  dispatch(clearEditingMessage());
-  if (textareaRef.current) textareaRef.current.style.height = '46px';
-};
+  const handleSend = () => {
+    if ((!text.trim() && !file) || !currentUser) return;
+    
+    let msgType = 'text';
+    if (file) {
+      if (file.type.startsWith('image/')) msgType = 'image';
+      else if (file.type.startsWith('video/')) msgType = 'video';
+      else if (file.type.startsWith('audio/')) msgType = 'audio';
+      else msgType = 'file';
+    }
+    
+    onSend({
+      content: text.trim() || null,
+      messageType: msgType,
+      file: file,
+      isEdit: !!editingMessage,
+      msgId: editingMessage?.id
+    });
+    
+    setText('');
+    setFile(null);
+    dispatch(clearReplyTo());
+    dispatch(clearEditingMessage());
+    if (textareaRef.current) textareaRef.current.style.height = '46px';
+  };
 
   const onMediaPointerDown = (e) => {
     if (text.trim() || editingMessage || file || !canSendVoiceVideo) return;
@@ -146,9 +144,9 @@ const handleSend = () => {
     return (
       <motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-        className="w-full bg-[#121214] border-t border-white/5 pb-safe z-[50] flex items-center justify-center p-4"
+        className="w-full bg-white dark:bg-[#121214] border-t border-neutral-200 dark:border-white/5 pb-safe z-[50] flex items-center justify-center p-4 transition-colors duration-300"
       >
-        <div className="flex items-center gap-2 text-red-400/80 bg-red-500/10 px-5 py-3 rounded-2xl border border-red-500/20">
+        <div className="flex items-center gap-2 text-red-500 dark:text-red-400/80 bg-red-500/10 px-5 py-3 rounded-2xl border border-red-200 dark:border-red-500/20">
           <Ban size={20} />
           <span className="text-[15px] font-medium">Siz guruhda bloklangansiz</span>
         </div>
@@ -160,9 +158,9 @@ const handleSend = () => {
     return (
       <motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-        className="w-full bg-[#121214] border-t border-white/5 pb-safe z-[51] flex items-center justify-center p-4"
+        className="w-full bg-white dark:bg-[#121214] border-t border-neutral-200 dark:border-white/5 pb-safe z-[51] flex items-center justify-center p-4 transition-colors duration-300"
       >
-        <div className="flex items-center gap-2 text-white/40 bg-white/5 px-5 py-3 rounded-2xl border border-white/5">
+        <div className="flex items-center gap-2 text-neutral-500 dark:text-white/40 bg-neutral-100 dark:bg-white/5 px-5 py-3 rounded-2xl border border-neutral-200 dark:border-white/5 transition-colors duration-300">
           <Ban size={20} />
           <span className="text-[15px] font-medium">Sizga yozish ruxsat etilmagan</span>
         </div>
@@ -173,7 +171,7 @@ const handleSend = () => {
   return (
     <motion.div 
       layout
-      className="relative w-full bg-[#121214] border-t border-white/5 pb-safe z-[99]"
+      className="relative w-full bg-white dark:bg-[#121214] border-t border-neutral-200 dark:border-white/5 pb-safe z-[99] transition-colors duration-300"
     >
       <AnimatePresence>
         {(replyTo || editingMessage || file) && (
@@ -181,22 +179,22 @@ const handleSend = () => {
             initial={{ height: 0, opacity: 0 }} 
             animate={{ height: 'auto', opacity: 1 }} 
             exit={{ height: 0, opacity: 0 }}
-            className="px-4 py-2 bg-white/5 border-b border-white/5 flex items-center gap-3 overflow-hidden"
+            className="px-4 py-2 bg-neutral-50 dark:bg-white/5 border-b border-neutral-100 dark:border-white/5 flex items-center gap-3 overflow-hidden transition-colors duration-300"
           >
             <div className={`w-1 h-8 rounded-full ${editingMessage ? 'bg-amber-400' : 'bg-[#007aff]'}`} />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase text-white/40">
+              <p className="text-[10px] font-black uppercase text-neutral-400 dark:text-white/40 transition-colors duration-300">
                 {editingMessage ? 'Tahrirlash' : file ? 'Fayl' : 'Javob'}
               </p>
-              <p className="text-sm text-white/90 truncate">
+              <p className="text-sm text-neutral-800 dark:text-white/90 truncate transition-colors duration-300">
                 {editingMessage?.content || file?.name || replyTo?.content || 'Media biriktirildi'}
               </p>
             </div>
             <button 
               onClick={() => { setFile(null); dispatch(clearReplyTo()); dispatch(clearEditingMessage()); }} 
-              className="p-1.5 hover:bg-white/10 rounded-full transition-colors active:scale-90"
+              className="p-1.5 hover:bg-neutral-200 dark:hover:bg-white/10 rounded-full transition-colors active:scale-90"
             >
-              <X size={18} className="text-white/40" />
+              <X size={18} className="text-neutral-400 dark:text-white/40 transition-colors duration-300" />
             </button>
           </motion.div>
         )}
@@ -210,7 +208,7 @@ const handleSend = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0, opacity: 0, width: 0 }}
               onClick={() => fileInputRef.current?.click()} 
-              className="p-2.5 rounded-full text-[#007aff] hover:bg-white/5 shrink-0 transition-all active:scale-90"
+              className="p-2.5 rounded-full text-[#007aff] hover:bg-neutral-100 dark:hover:bg-white/5 shrink-0 transition-all active:scale-90"
             >
               <Paperclip size={26} strokeWidth={2.5} />
             </motion.button>
@@ -220,7 +218,9 @@ const handleSend = () => {
         <motion.div 
           layout
           className={`flex-1 min-w-0 flex items-end rounded-[24px] border transition-all overflow-hidden relative ${
-            isRecording ? 'bg-red-500/10 border-red-500/30' : 'bg-[#1c1c1e] border-white/10 focus-within:border-white/20'
+            isRecording 
+              ? 'bg-red-500/10 border-red-500/30' 
+              : 'bg-neutral-100 dark:bg-[#1c1c1e] border-neutral-200 dark:border-white/10 focus-within:border-neutral-300 dark:focus-within:border-white/20'
           }`}
         >
           {isRecording ? (
@@ -230,11 +230,11 @@ const handleSend = () => {
                 transition={{ repeat: Infinity, duration: 1 }}
                 className="w-2.5 h-2.5 bg-red-500 rounded-full" 
               />
-              <span className="flex-1 font-mono text-white text-[17px] tracking-wide">{formatDuration(duration)}</span>
+              <span className="flex-1 font-mono text-red-500 dark:text-white text-[17px] tracking-wide transition-colors duration-300">{formatDuration(duration)}</span>
               <motion.div 
                 animate={{ x: [0, -6, 0] }} 
                 transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                className="text-[11px] text-white/50 uppercase font-black tracking-tighter flex items-center gap-1"
+                className="text-[11px] text-red-500/60 dark:text-white/50 uppercase font-black tracking-tighter flex items-center gap-1 transition-colors duration-300"
               >
                 <span>←</span> Bekor qilish
               </motion.div>
@@ -242,7 +242,7 @@ const handleSend = () => {
           ) : (
             <>
               {canSendText && (
-                <button className="p-3 text-white/30 hover:text-white shrink-0 transition-colors active:scale-90">
+                <button className="p-3 text-neutral-400 dark:text-white/30 hover:text-neutral-600 dark:hover:text-white shrink-0 transition-colors active:scale-90">
                   <Smile size={26} />
                 </button>
               )}
@@ -253,7 +253,7 @@ const handleSend = () => {
                 onChange={(e) => { setText(e.target.value); onTyping?.(); }}
                 disabled={!canSendText}
                 placeholder={!canSendText ? "Matn yozish ruxsat etilmagan" : file ? "Izoh yozing..." : "Xabar..."}
-                className={`flex-1 py-3 bg-transparent text-white outline-none resize-none text-[17px] min-h-[46px] max-h-[140px] custom-scrollbar leading-[1.3] ${!canSendText ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`flex-1 py-3 bg-transparent text-neutral-900 dark:text-white outline-none resize-none text-[17px] min-h-[46px] max-h-[140px] custom-scrollbar leading-[1.3] placeholder:text-neutral-400 dark:placeholder:text-slate-400 transition-colors duration-300 ${!canSendText ? 'opacity-50 cursor-not-allowed' : ''}`}
                 rows={1}
                 onInput={(e) => { 
                   e.target.style.height = 'auto'; 
@@ -262,7 +262,7 @@ const handleSend = () => {
               />
 
               {canSendText && (
-                <button className="p-3 text-white/30 hover:text-white shrink-0 transition-colors active:scale-90">
+                <button className="p-3 text-neutral-400 dark:text-white/30 hover:text-neutral-600 dark:hover:text-white shrink-0 transition-colors active:scale-90">
                   <Sticker size={24} />
                 </button>
               )}
@@ -297,10 +297,12 @@ const handleSend = () => {
                 onPointerUp={onMediaPointerUp}
                 onPointerCancel={onMediaPointerUp} 
                 onPointerLeave={(e) => { if (isRecording) onMediaPointerUp(e); }}
-                className={`p-3 rounded-full transition-colors relative flex items-center justify-center ${
+                className={`p-3 rounded-full transition-all relative flex items-center justify-center ${
                   isRecording 
                     ? 'bg-red-500 text-white shadow-[0_0_30px_rgba(239,68,68,0.6)]' 
-                    : mediaMode === 'voice' ? 'text-white/50 bg-white/5 hover:bg-white/10' : 'text-[#007aff] bg-[#007aff]/10 hover:bg-[#007aff]/20'
+                    : mediaMode === 'voice' 
+                      ? 'text-neutral-500 dark:text-white/50 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10' 
+                      : 'text-[#007aff] bg-[#007aff]/10 hover:bg-[#007aff]/20'
                 }`}
               >
                 {isRecording ? <CircleStop size={28} /> : mediaMode === 'voice' ? <Mic size={28} /> : <Video size={28} />}
