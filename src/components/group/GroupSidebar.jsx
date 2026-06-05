@@ -17,10 +17,10 @@ import GroupSettings from './GroupSettings';
 const GROUP_ID = import.meta.env.VITE_GROUP_ID;
 
 const TABS = [
-  { id: 'members', label: "A'zolar", Icon: Users },
+  { id: 'members', label: "A'zol", Icon: Users },
   { id: 'media', label: 'Media', Icon: Image },
-  { id: 'files', label: 'Fayllar', Icon: FileText },
-  { id: 'links', label: 'Havolalar', Icon: Link2 },
+  { id: 'files', label: 'Fayl', Icon: FileText },
+  { id: 'links', label: 'Havola', Icon: Link2 },
   { id: 'voice', label: 'Ovoz/Video', Icon: Mic },
   { id: 'settings', label: 'Sozlamalar', Icon: Settings },
 ];
