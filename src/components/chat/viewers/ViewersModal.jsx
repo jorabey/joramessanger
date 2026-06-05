@@ -1,13 +1,3 @@
-// ==========================================
-// ViewersModal.jsx — Xabarni ko'rganlar ro'yxati
-// ==========================================
-// - Ko'rganlar soni va ro'yxati
-// - Kim qachon ko'rgani (vaqt bilan)
-// - Avatar + ism
-// - Faqat ruxsat bo'lganda ko'rsatiladi (canSeeViewers)
-// - Animatsiyali modal
-// ==========================================
-
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Eye, X } from 'lucide-react';
@@ -32,11 +22,11 @@ const ViewerRow = ({ read, isCurrentUser }) => {
     : '';
 
   return (
-    <div className={[
-      'flex items-center gap-3 px-4 py-2.5 rounded-xl',
-      'transition-colors duration-100',
-      isCurrentUser ? 'bg-blue-500/8' : 'hover:bg-white/4',
-    ].join(' ')}>
+    <div className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-colors duration-200 ${
+      isCurrentUser 
+        ? 'bg-blue-500/10' 
+        : 'hover:bg-neutral-200 dark:hover:bg-white/5'
+    }`}>
       {/* Avatar */}
       <Avatar
         src={profile?.avatar_url}
@@ -48,18 +38,18 @@ const ViewerRow = ({ read, isCurrentUser }) => {
 
       {/* Ism + Ko'rgan vaqti */}
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium leading-tight truncate ${isCurrentUser ? 'text-blue-300' : 'text-slate-200'}`}>
+        <p className={`text-sm font-medium leading-tight truncate ${isCurrentUser ? 'text-blue-600 dark:text-blue-300' : 'text-neutral-900 dark:text-slate-200'} transition-colors duration-300`}>
           {isCurrentUser ? `${fullName} (siz)` : fullName}
         </p>
         {readAt && (
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          <p className="text-[11px] text-neutral-500 dark:text-slate-500 mt-0.5 transition-colors duration-300">
             {readAt}
           </p>
         )}
       </div>
 
       {/* Ko'rgan belgisi */}
-      <Eye size={13} className="text-blue-400 shrink-0" />
+      <Eye size={13} className="text-blue-500 dark:text-blue-400 shrink-0" />
     </div>
   );
 };
@@ -70,24 +60,22 @@ const ViewerRow = ({ read, isCurrentUser }) => {
 const ViewersModal = ({
   isOpen,
   onClose,
-  reads = [],       // message.reads massivi
-  totalMembers = 0, // Guruh a'zolari soni (foiz hisoblash uchun)
+  reads = [],       
+  totalMembers = 0, 
 }) => {
   const currentUser = useSelector(selectUser);
 
-  // O'zini ro'yxat boshiga qo'yish, qolganlarni vaqt bo'yicha tartiblash
   const sortedReads = useMemo(() => {
     if (!reads.length) return [];
 
     const me    = reads.filter((r) => r.user_id === currentUser?.id);
     const others = reads
       .filter((r) => r.user_id !== currentUser?.id)
-      .sort((a, b) => new Date(b.read_at) - new Date(a.read_at)); // Yangilari birinchi
+      .sort((a, b) => new Date(b.read_at) - new Date(a.read_at));
 
     return [...me, ...others];
   }, [reads, currentUser]);
 
-  // Ko'rganlar foizi (guruh a'zolari - 1 o'zini chiqarib)
   const totalOthers   = Math.max(totalMembers - 1, 1);
   const readCount     = reads.length;
   const readPercent   = Math.round((readCount / totalOthers) * 100);
@@ -102,7 +90,7 @@ const ViewersModal = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15 }}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -112,27 +100,20 @@ const ViewersModal = ({
         animate={{ opacity: 1, y: 0,  scale: 1 }}
         exit={{ opacity: 0, y: 40,  scale: 0.97 }}
         transition={{ duration: 0.22, ease: [0.34, 1.26, 0.64, 1] }}
-        className={[
-          'relative w-full max-w-sm',
-          'rounded-t-3xl sm:rounded-3xl',
-          'overflow-hidden shadow-2xl shadow-black/60',
-          'flex flex-col',
-          'max-h-[70dvh]',
-        ].join(' ')}
-        style={{ background: '#1a1d2e' }}
+        className="relative w-full max-w-sm rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-black/20 flex flex-col max-h-[70dvh] bg-white dark:bg-[#1a1d2e] transition-colors duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ---- HEADER ---- */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center">
-              <Eye size={15} className="text-blue-400" />
+            <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <Eye size={15} className="text-blue-500 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white leading-none">
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white leading-none transition-colors duration-300">
                 Ko'rganlar
               </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[11px] text-neutral-500 dark:text-slate-500 mt-0.5 transition-colors duration-300">
                 {readCount === 0
                   ? "Hali hech kim ko'rmagan"
                   : `${readCount} ta kishi`}
@@ -140,10 +121,9 @@ const ViewersModal = ({
             </div>
           </div>
 
-          {/* Yopish */}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/8 transition-all"
+            className="p-1.5 rounded-xl text-neutral-500 dark:text-slate-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/8 transition-all"
           >
             <X size={16} />
           </button>
@@ -153,32 +133,32 @@ const ViewersModal = ({
         {totalMembers > 1 && (
           <div className="px-5 pb-4 shrink-0">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-slate-500">Ko'rish darajasi</span>
-              <span className="text-[11px] font-semibold text-blue-400">{readPercent}%</span>
+              <span className="text-[11px] text-neutral-500 dark:text-slate-500 transition-colors duration-300">Ko'rish darajasi</span>
+              <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 transition-colors duration-300">{readPercent}%</span>
             </div>
-            <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+            <div className="h-1.5 rounded-full bg-neutral-200 dark:bg-white/8 overflow-hidden transition-colors duration-300">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${readPercent}%` }}
                 transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
-                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400"
+                className="h-full rounded-full bg-gradient-to-r from-blue-600 to-blue-500"
               />
             </div>
           </div>
         )}
 
         {/* ---- DIVIDER ---- */}
-        <div className="h-px bg-white/8 mx-5 shrink-0" />
+        <div className="h-px bg-neutral-200 dark:bg-white/8 mx-5 shrink-0 transition-colors duration-300" />
 
         {/* ---- RO'YXAT ---- */}
         <div className="flex-1 overflow-y-auto overscroll-contain py-2 px-1">
           {sortedReads.length === 0 ? (
             /* Bo'sh holat */
             <div className="flex flex-col items-center justify-center py-10 gap-3">
-              <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center">
-                <Eye size={22} className="text-slate-600" />
+              <div className="w-14 h-14 rounded-full bg-neutral-100 dark:bg-white/5 flex items-center justify-center transition-colors duration-300">
+                <Eye size={22} className="text-neutral-400 dark:text-slate-600" />
               </div>
-              <p className="text-sm text-slate-500 text-center">
+              <p className="text-sm text-neutral-500 dark:text-slate-500 text-center transition-colors duration-300">
                 Hali hech kim ko'rmagan
               </p>
             </div>
@@ -208,24 +188,3 @@ const ViewersModal = ({
 };
 
 export default ViewersModal;
-
-// ==========================================
-// ISHLATILISHI (USAGE):
-// ==========================================
-// BaseBubble ichida yoki MessageList da:
-//
-// const [viewersOpen, setViewersOpen] = useState(false);
-// const { canSeeViewers } = usePermissions();
-//
-// {isMe && canSeeViewers && message.reads?.length > 0 && (
-//   <button onClick={() => setViewersOpen(true)}>
-//     <Eye size={12} /> {message.reads.length}
-//   </button>
-// )}
-//
-// <ViewersModal
-//   isOpen={viewersOpen}
-//   onClose={() => setViewersOpen(false)}
-//   reads={message.reads}
-//   totalMembers={totalMembers}
-// />
