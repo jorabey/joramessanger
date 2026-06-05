@@ -37,7 +37,7 @@ const DateDivider = memo(({ date }) => {
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center justify-center py-4 my-2 select-none w-full clear-both"
     >
-      <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest bg-white/5 px-3.5 py-1 rounded-full backdrop-blur-md">
+      <span className="text-[11px] font-bold text-neutral-500 dark:text-white/40 uppercase tracking-widest bg-neutral-100 dark:bg-white/5 px-3.5 py-1 rounded-full backdrop-blur-md transition-colors duration-300">
         {label}
       </span>
     </motion.div>
@@ -198,7 +198,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
           showName = false;
       }
       if (nextMsg?.user_id === msg.user_id && isSameDay(new Date(nextMsg.created_at || Date.now()), msgDate)) {
-          showAvatar = false; // Keyingi xabar ham shu odamniki bo'lsa, avatar yashiriladi. Ya'ni oxirgi xabarda chiqadi (items-end bilan).
+          showAvatar = false; 
       }
 
       // 🔴 REAL-TIME: Eng yangi profilni members array dan qidiramiz
@@ -207,7 +207,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
       
       const realTimeMsg = {
         ...msg,
-        profiles: realTimeProfile // Eskirgan ma'lumotni yangisiga almashtiramiz
+        profiles: realTimeProfile 
       };
 
       items.push({ 
@@ -244,7 +244,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
   }
 
   return (
-    <div className="relative flex-1 min-h-0 bg-[#000000]" style={{ WebkitTapHighlightColor: 'transparent' }}>
+    <div className="relative flex-1 min-h-0 bg-white dark:bg-black transition-colors duration-300" style={{ WebkitTapHighlightColor: 'transparent' }}>
       <div
         ref={listRef}
         onScroll={handleScroll}
@@ -263,14 +263,14 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center justify-center h-full gap-4 py-16 opacity-60 flex-1"
           >
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center shadow-inner">
-              <MessageSquareOff size={32} className="text-white/40" />
+            <div className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-white/5 flex items-center justify-center shadow-inner transition-colors duration-300">
+              <MessageSquareOff size={32} className="text-neutral-400 dark:text-white/40 transition-colors duration-300" />
             </div>
             <div className="text-center">
-              <p className="text-[15px] font-medium text-white/70">
+              <p className="text-[15px] font-medium text-neutral-700 dark:text-white/77 transition-colors duration-300">
                 {searchQuery ? 'Hech narsa topilmadi' : 'Hali xabarlar yo\'q'}
               </p>
-              <p className="text-xs text-white/40 mt-1">
+              <p className="text-xs text-neutral-400 dark:text-white/40 mt-1 transition-colors duration-300">
                 {searchQuery ? `"${searchQuery}" bo'yicha natija yo'q` : 'Birinchi bo\'lib xabar yozing!'}
               </p>
             </div>
@@ -293,7 +293,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
                 animate={{ opacity: 1 }}
                 className={`flex w-full ${item.isOwn ? 'justify-end' : 'justify-start'} ${item.showAvatar ? 'mb-3' : 'mb-1'}`}
               >
-                <div className={`px-3 py-1.5 rounded-[14px] text-[12px] font-medium flex items-center gap-1.5 border ${item.isOwn ? 'bg-white/5 text-white/40 border-white/5' : 'bg-white/5 text-white/40 border-white/5'}`}>
+                <div className={`px-3 py-1.5 rounded-[14px] text-[12px] font-medium flex items-center gap-1.5 border bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-white/40 border-neutral-200 dark:border-white/5 transition-colors duration-300`}>
                   <Ban size={12} className="opacity-60" /> Xabar o'chirildi
                 </div>
               </motion.div>
@@ -351,8 +351,8 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
                     onScrollToMessage={scrollToMessage}
                   />
                   {isPending && item.isOwn && (
-                    <div className="absolute -right-5 bottom-1.5 flex items-center justify-center w-[18px] h-[18px] bg-black/60 rounded-full backdrop-blur-sm shadow-sm">
-                      <Clock size={10} className="text-white/80" />
+                    <div className="absolute -right-5 bottom-1.5 flex items-center justify-center w-[18px] h-[18px] bg-neutral-200/80 dark:bg-black/60 rounded-full backdrop-blur-sm shadow-sm transition-colors duration-300">
+                      <Clock size={10} className="text-neutral-600 dark:text-white/80 transition-colors duration-300" />
                     </div>
                   )}
                 </div>
@@ -363,9 +363,9 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0, opacity: 0 }}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 shrink-0 mb-1"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-white/10 shrink-0 mb-1 transition-colors duration-300"
                     >
-                      <Reply size={16} className="text-white" />
+                      <Reply size={16} className="text-neutral-600 dark:text-white transition-colors duration-300" />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -390,7 +390,7 @@ const MessageList = ({ onLoadMore, onDelete, onReact, members = [], onMarkAsRead
                 isUserScrollingRef.current = false;
                 scrollToBottom(true);
             }}
-            className="absolute bottom-6 right-4 sm:right-6 z-30 w-[44px] h-[44px] rounded-full bg-[#1c1c1e]/90 backdrop-blur-2xl text-white border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.5)] flex items-center justify-center transition-transform active:scale-[0.85]"
+            className="absolute bottom-6 right-4 sm:right-6 z-30 w-[44px] h-[44px] rounded-full bg-white/90 dark:bg-[#1c1c1e]/90 text-neutral-800 dark:text-white border border-neutral-200 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex items-center justify-center transition-all active:scale-[0.85]"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <ArrowDown size={22} strokeWidth={2.5} className="text-[#007aff]" />
