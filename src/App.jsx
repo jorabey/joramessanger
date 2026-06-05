@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -140,7 +140,6 @@ const AppLockWrapper = ({ children }) => {
   useEffect(() => {
     if (!currentUser?.id) return;
     const registerPushNotifications = async () => {
-      // 🔴 XATO DAVOLANDI: 'Notification' in window tekshiruvi qo'shildi
       if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
         try {
           const registration = await navigator.serviceWorker.ready;
@@ -185,7 +184,7 @@ const AppLockWrapper = ({ children }) => {
   const shouldShowLock = currentUser && hasPasscode && !isUnlocked;
 
   return (
-    <div className="w-full h-full relative bg-[#000000] select-none">
+    <div className="w-full h-full relative bg-white dark:bg-black select-none transition-colors duration-300">
       <div className={`w-full h-full flex flex-col ${shouldShowLock ? 'pointer-events-none blur-sm opacity-40 scale-[0.98]' : 'opacity-100 scale-100'} transition-all duration-300 ease-out`}>
         {children}
         <PwaInstallPrompt />
@@ -199,7 +198,7 @@ const AppLockWrapper = ({ children }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -100, scale: 1.05 }} 
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[999999] bg-[#000000]"
+            className="fixed inset-0 z-[999999] bg-white dark:bg-black transition-colors duration-300"
           >
             <PasscodeScreen
               mode="verify"
@@ -216,22 +215,14 @@ const AppLockWrapper = ({ children }) => {
 const ProtectedRoute = ({ children }) => {
   const isAuth = useSelector(selectIsAuthenticated);
   const isInit = useSelector(selectIsInitialized);
- 
-  // TUZATISH: initialized bo'lguncha kutamiz
-  // Avval: if (!isAuth) return <Navigate to="/login" />
-  // Muammo: isInit=false, isAuth=false → login ga yuborardi
-  // Endi: isInit bo'lguncha hech narsa ko'rsatmaymiz (AppLockWrapper loader ko'rsatadi)
   if (!isInit) return null;
   if (!isAuth) return <Navigate to="/login" replace />;
   return children;
 };
 
-
 const PublicRoute = ({ children }) => {
   const isAuth = useSelector(selectIsAuthenticated);
   const isInit = useSelector(selectIsInitialized);
- 
-  // TUZATISH: initialized bo'lguncha kutamiz
   if (!isInit) return null;
   if (isAuth) return <Navigate to="/chat" replace />;
   return children;
@@ -253,8 +244,7 @@ const AppRoutes = () => {
 
   return (
     <AppLockWrapper>
-      <div className="w-full h-[100dvh] bg-[#000000] overflow-hidden relative">
-        {/* 🔴 XATO DAVOLANDI: "location={location} key={location.pathname}" Olib tashlandi (sahifa uzilib tushmaydi) */}
+      <div className="w-full h-[100dvh] bg-white dark:bg-black overflow-hidden relative transition-colors duration-300">
         <Routes>
           <Route path="/" element={<Navigate to="/chat" replace />} />
           <Route path="/login" element={<PublicRoute><AnimatedPage><Login /></AnimatedPage></PublicRoute>} />
@@ -268,7 +258,6 @@ const AppRoutes = () => {
 
 const App = () => {
   useEffect(() => {
-    // 🔴 XATO DAVOLANDI: iOS da Notification obyekti yo'qligi hisobga olindi
     if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
       navigator.serviceWorker.register('/sw.js')
         .then(function (registration) {
@@ -283,10 +272,10 @@ const App = () => {
 
   return (
     <Suspense fallback={<Loader />}>
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-      </Suspense>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </Suspense>
   );
 };
 
