@@ -4,8 +4,8 @@ import { Send, Link2, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../config/supabaseClient';
 import Avatar from '../ui/Avatar';
-import { selectUser } from '../../../redux/authSlice';
-import { usePermissions } from '../../../hooks/usePermissions';
+import { selectUser } from '../../redux/authSlice';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const calcAge = (dob) => {
   if (!dob) return null;
