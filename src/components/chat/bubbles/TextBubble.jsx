@@ -18,7 +18,7 @@ const linkifyText = (text) => {
           href={part}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#59aeff] underline underline-offset-2 hover:text-[#7bbfff] break-all transition-colors"
+          className="text-blue-600 dark:text-[#59aeff] underline underline-offset-2 hover:text-blue-500 dark:hover:text-[#7bbfff] break-all transition-colors duration-300"
           onClick={(e) => e.stopPropagation()}
           // Linkni bosganda ham nusxalash menyusi chiqmasligi uchun
           style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
@@ -51,9 +51,9 @@ const TextBubble = (props) => {
     >
       <BaseBubble {...props}>
         <div className="px-3.5 py-2.5">
-          {/* Asosiy matn */}
+          {/* Asosiy matn - Oq/Qora rejimga dinamik moslashgan */}
           {message.content && (
-            <p className="text-[15px] leading-[1.4] whitespace-pre-wrap break-words text-white font-normal">
+            <p className="text-[15px] leading-[1.4] whitespace-pre-wrap break-words text-neutral-900 dark:text-white font-normal transition-colors duration-300">
               {linkifyText(message.content)}
             </p>
           )}
