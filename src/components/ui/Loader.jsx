@@ -63,15 +63,23 @@ const loaderStyles = `
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #fff;
     top: 50%;
     left: 50%;
     margin: -7px;
     filter: blur(0.2px);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
   }
 
-  .oneui-dot:nth-child(1) { animation: topDot    1s ease-in-out infinite; }
+  /* Oq rejim uchun ranglar */
+  @media (prefers-color-scheme: light) {
+    .oneui-dot { background: #000; box-shadow: 0 0 10px rgba(0, 0, 0, 0.4); }
+  }
+
+  /* Qora rejim uchun ranglar */
+  @media (prefers-color-scheme: dark) {
+    .oneui-dot { background: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, 0.4); }
+  }
+
+  .oneui-dot:nth-child(1) { animation: topDot   1s ease-in-out infinite; }
   .oneui-dot:nth-child(2) { animation: rightDot  1s ease-in-out infinite; }
   .oneui-dot:nth-child(3) { animation: bottomDot 1s ease-in-out infinite; }
   .oneui-dot:nth-child(4) { animation: leftDot   1s ease-in-out infinite; }
@@ -93,16 +101,7 @@ const Loader = ({ fullScreen = false }) => {
   if (fullScreen) {
     return (
       <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 99999,
-          background: '#000',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'none',
-        }}
+        className="fixed inset-0 z-[99999] bg-white dark:bg-black flex items-center justify-center pointer-events-none transition-colors duration-300"
       >
         {loaderEl}
       </div>
