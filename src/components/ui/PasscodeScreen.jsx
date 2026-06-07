@@ -49,13 +49,17 @@ const PasscodeScreen = ({
     }
   }, [lockoutUntil]);
 
+  // TO'G'RILANGAN QISM: passcode bog'liqligi olib tashlandi va shart ichkariga ko'chirildi
   const handleKeyPress = useCallback((val) => {
     if (timeLeft > 0) return;
-    if (passcode.length < passcodeLength) {
-      setPasscode(prev => prev + val);
-      setErrorText('');
-    }
-  }, [passcode, passcodeLength, timeLeft]);
+    setPasscode(prev => {
+      if (prev.length < passcodeLength) {
+        return prev + val;
+      }
+      return prev;
+    });
+    setErrorText('');
+  }, [passcodeLength, timeLeft]);
 
   const handleDelete = useCallback(() => {
     if (timeLeft > 0) return;
