@@ -114,7 +114,8 @@ const PasscodeScreen = ({
           }
         }
       };
-      setTimeout(verifyInput, 100);
+      // LAHZADA TEKSHIRISH (Sun'iy delay olib tashlandi)
+      verifyInput();
     }
   }, [passcode, passcodeLength, mode, savedPasscode, setupStep, firstPasscode, onSuccess, controls, timeLeft]);
 
@@ -160,50 +161,53 @@ const PasscodeScreen = ({
               {errorText}
             </p>
 
-            {/* Nuqtalar */}
+            {/* Nuqtalar: Ultra yuqori unumdorlikka ega sof CSS o'tish tizimi */}
             <motion.div animate={controls} variants={shakeVariants} className="flex items-center gap-4 my-8">
-              {Array.from({ length: passcodeLength }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  initial={false}
-                  animate={{
-                    scale: passcode.length > i ? 1.15 : 1,
-                    backgroundColor: passcode.length > i ? '#007aff' : 'rgba(156, 163, 175, 0.3)',
-                    borderColor: passcode.length > i ? '#007aff' : 'rgba(156, 163, 175, 0.5)'
-                  }}
-                  transition={{ duration: 0.12, ease: "easeOut" }}
-                  className="w-[14px] h-[14px] rounded-full border-[1.5px]"
-                />
-              ))}
+              {Array.from({ length: passcodeLength }).map((_, i) => {
+                const isFilled = passcode.length > i;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      transform: isFilled ? 'scale(1.15)' : 'scale(1)',
+                      backgroundColor: isFilled ? '#007aff' : 'rgba(156, 163, 175, 0.3)',
+                      borderColor: isFilled ? '#007aff' : 'rgba(156, 163, 175, 0.5)'
+                    }}
+                    className="w-[14px] h-[14px] rounded-full border-[1.5px] transition-all duration-100 ease-out"
+                  />
+                );
+              })}
             </motion.div>
           </>
         )}
 
-        {/* Raqamlar paneli (Double fire muammosi to'g'rilandi) */}
+        {/* Raqamlar paneli: onPointerDown va touchAction=none orqali 0ms kechikish */}
         <div className={`grid grid-cols-3 gap-x-6 gap-y-4 mt-auto pb-12 w-full px-6 transition-opacity duration-300 ${timeLeft > 0 ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
             <button
               key={num}
-              onClick={() => handleKeyPress(num.toString())}
-              className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 active:bg-neutral-300 dark:active:bg-white/30 transition-colors mx-auto select-none"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              onPointerDown={(e) => { e.preventDefault(); handleKeyPress(num.toString()); }}
+              className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 active:bg-neutral-300 dark:active:bg-white/30 mx-auto select-none"
+              style={{ touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}
             >
               <span className="text-[32px] font-normal">{num}</span>
             </button>
           ))}
           <div />
           <button
-            onClick={() => handleKeyPress('0')}
-            className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 active:bg-neutral-300 dark:active:bg-white/30 transition-colors mx-auto select-none"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            key="0"
+            onPointerDown={(e) => { e.preventDefault(); handleKeyPress('0'); }}
+            className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 active:bg-neutral-300 dark:active:bg-white/30 mx-auto select-none"
+            style={{ touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}
           >
             <span className="text-[32px] font-normal">0</span>
           </button>
           <button
-            onClick={handleDelete}
+            key="delete"
+            onPointerDown={(e) => { e.preventDefault(); handleDelete(); }}
             disabled={passcode.length === 0}
-            className="w-[75px] h-[75px] rounded-full flex items-center justify-center text-neutral-500 dark:text-white/70 active:bg-neutral-300 dark:active:bg-white/20 transition-colors disabled:opacity-30 mx-auto select-none"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            className="w-[75px] h-[75px] rounded-full flex items-center justify-center text-neutral-500 dark:text-white/70 active:bg-neutral-300 dark:active:bg-white/20 disabled:opacity-30 mx-auto select-none"
+            style={{ touchAction: 'none', WebkitTapHighlightColor: 'transparent' }}
           >
             <Delete size={28} />
           </button>
