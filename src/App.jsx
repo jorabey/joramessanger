@@ -231,6 +231,44 @@ const PublicRoute = ({ children }) => {
 const AppRoutes = () => {
   useAuth(); 
 
+  // --- AUTOMATIC GLOBAL URL HISTORY TRACKER ---
+  useEffect(() => {
+    let historyCount = 0;
+
+    const handleGlobalInteraction = (e) => {
+      const interactiveElement = e.target.closest('button, a, svg, [role="button"], input, textarea, select, .modal-trigger');
+      
+      if (interactiveElement) {
+        historyCount++;
+        const randomId = Math.random().toString(36).substring(2, 12);
+        const url = new URL(window.location.href);
+        url.searchParams.set('on', randomId);
+        
+        if (historyCount > 10) {
+          window.history.replaceState({ actionId: randomId }, '', url.toString());
+          historyCount = 10; 
+        } else {
+          window.history.pushState({ actionId: randomId }, '', url.toString());
+        }
+      }
+    };
+
+    const handlePopState = () => {
+      if (historyCount > 0) {
+        historyCount--;
+      }
+    };
+
+    document.addEventListener('click', handleGlobalInteraction, true);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      document.removeEventListener('click', handleGlobalInteraction, true);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+  // --------------------------------------------
+
   useEffect(() => {
     const goOnline = () => { toast.success("Tarmoqqa qayta ulandi", { id: 'net-status' }); };
     const goOffline = () => { toast.error("Internet aloqasi uzildi...", { id: 'net-status', duration: Infinity }); };
