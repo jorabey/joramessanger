@@ -179,12 +179,11 @@ const PasscodeScreen = ({
           </>
         )}
 
-        {/* Raqamlar paneli */}
+        {/* Raqamlar paneli (Double fire muammosi to'g'rilandi) */}
         <div className={`grid grid-cols-3 gap-x-6 gap-y-4 mt-auto pb-12 w-full px-6 transition-opacity duration-300 ${timeLeft > 0 ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
             <button
               key={num}
-              onTouchStart={(e) => { e.preventDefault(); handleKeyPress(num.toString()); }}
               onClick={() => handleKeyPress(num.toString())}
               className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 active:bg-neutral-300 dark:active:bg-white/30 transition-colors mx-auto select-none"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
@@ -194,7 +193,6 @@ const PasscodeScreen = ({
           ))}
           <div />
           <button
-            onTouchStart={(e) => { e.preventDefault(); handleKeyPress('0'); }}
             onClick={() => handleKeyPress('0')}
             className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 active:bg-neutral-300 dark:active:bg-white/30 transition-colors mx-auto select-none"
             style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
@@ -202,7 +200,6 @@ const PasscodeScreen = ({
             <span className="text-[32px] font-normal">0</span>
           </button>
           <button
-            onTouchStart={(e) => { e.preventDefault(); handleDelete(); }}
             onClick={handleDelete}
             disabled={passcode.length === 0}
             className="w-[75px] h-[75px] rounded-full flex items-center justify-center text-neutral-500 dark:text-white/70 active:bg-neutral-300 dark:active:bg-white/20 transition-colors disabled:opacity-30 mx-auto select-none"
