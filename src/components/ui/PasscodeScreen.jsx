@@ -49,7 +49,6 @@ const PasscodeScreen = ({
     }
   }, [lockoutUntil]);
 
-  // TO'G'RILANGAN QISM: passcode bog'liqligi olib tashlandi va shart ichkariga ko'chirildi
   const handleKeyPress = useCallback((val) => {
     if (timeLeft > 0) return;
     setPasscode(prev => {
@@ -129,7 +128,7 @@ const PasscodeScreen = ({
   }, [handleKeyPress, handleDelete]);
 
   return (
-    <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-white dark:bg-[#000000] text-neutral-900 dark:text-white transition-colors duration-300">
+    <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-white dark:bg-[#000000] text-neutral-900 dark:text-white transition-colors duration-300 select-none">
       {onClose && mode !== 'verify' && (
         <button onClick={onClose} className="absolute top-12 right-6 p-2 bg-neutral-200 dark:bg-white/10 rounded-full active:scale-90 transition-transform">
           <X size={24} />
@@ -168,11 +167,11 @@ const PasscodeScreen = ({
                   key={i}
                   initial={false}
                   animate={{
-                    scale: passcode.length > i ? 1.2 : 1,
+                    scale: passcode.length > i ? 1.15 : 1,
                     backgroundColor: passcode.length > i ? '#007aff' : 'rgba(156, 163, 175, 0.3)',
                     borderColor: passcode.length > i ? '#007aff' : 'rgba(156, 163, 175, 0.5)'
                   }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  transition={{ duration: 0.12, ease: "easeOut" }}
                   className="w-[14px] h-[14px] rounded-full border-[1.5px]"
                 />
               ))}
@@ -185,23 +184,29 @@ const PasscodeScreen = ({
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
             <button
               key={num}
+              onTouchStart={(e) => { e.preventDefault(); handleKeyPress(num.toString()); }}
               onClick={() => handleKeyPress(num.toString())}
-              className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 active:bg-neutral-300 dark:active:bg-white/30 transition-colors mx-auto"
+              className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 active:bg-neutral-300 dark:active:bg-white/30 transition-colors mx-auto select-none"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               <span className="text-[32px] font-normal">{num}</span>
             </button>
           ))}
           <div />
           <button
+            onTouchStart={(e) => { e.preventDefault(); handleKeyPress('0'); }}
             onClick={() => handleKeyPress('0')}
-            className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 hover:bg-neutral-200 dark:hover:bg-white/20 active:bg-neutral-300 dark:active:bg-white/30 transition-colors mx-auto"
+            className="w-[75px] h-[75px] rounded-full flex items-center justify-center bg-neutral-100 dark:bg-white/10 active:bg-neutral-300 dark:active:bg-white/30 transition-colors mx-auto select-none"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             <span className="text-[32px] font-normal">0</span>
           </button>
           <button
+            onTouchStart={(e) => { e.preventDefault(); handleDelete(); }}
             onClick={handleDelete}
             disabled={passcode.length === 0}
-            className="w-[75px] h-[75px] rounded-full flex items-center justify-center text-neutral-500 dark:text-white/70 hover:bg-neutral-200 dark:hover:bg-white/10 active:bg-neutral-300 dark:active:bg-white/20 transition-colors disabled:opacity-30 mx-auto"
+            className="w-[75px] h-[75px] rounded-full flex items-center justify-center text-neutral-500 dark:text-white/70 active:bg-neutral-300 dark:active:bg-white/20 transition-colors disabled:opacity-30 mx-auto select-none"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             <Delete size={28} />
           </button>
