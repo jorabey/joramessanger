@@ -60,46 +60,36 @@ const InstallOverlay = () => {
     setVisible(false);
   };
 
-  // BU YERDA ASOSIY O'ZGARISH
   const handleInstall = () => {
     if (!installUrl) return;
 
+    // URL'dan http/https ni olib tashlaymiz
+    const urlWithoutProtocol = installUrl.replace(/^https?:\/\//, '');
     const isAndroid = /Android/i.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isAndroid) {
-      // 1. Android uchun Chrome Intent
-      // SIZNING URL: https://example.com/download
-      // INTENT: intent://example.com/download#Intent;scheme=https;package=com.android.chrome;end
-      const urlWithoutProtocol = installUrl.replace(/^https?:\/\//, '');
-      const intentUrl = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;end`;
+      // ANDROID UCHUN:
+      // launchFlags=0x10000000 - bu FLAG_ACTIVITY_NEW_TASK degani.
+      // Bu tizimga "buni yangi oyna sifatida tashqarida och" deb buyruq beradi.
+      const intentUrl = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;launchFlags=0x10000000;end;`;
+      
       window.location.href = intentUrl;
     } 
     else if (isIOS) {
-       // 2. iOS uchun (PWA ichida juda qiyin, lekin bu eng samarali usul)
-       // googlechrome:// sxemasi yordamida ochishga urinish
-       window.location.href = `googlechrome://${installUrl.replace(/^https?:\/\//, '')}`;
-       
-       // Agar Chrome bo'lmasa, 1 soniyadan keyin standart brauzerda ochish
-       setTimeout(() => {
-           const link = document.createElement('a');
-           link.href = installUrl;
-           link.target = '_blank';
-           link.rel = 'noopener noreferrer';
-           document.body.appendChild(link);
-           link.click();
-           document.body.removeChild(link);
-       }, 1000);
+      // IOS UCHUN:
+      // googlechrome:// sxemasi yordamida ochish
+      window.location.href = `googlechrome://${urlWithoutProtocol}`;
+      
+      // Agar 1 soniya ichida Chrome ochilmasa, oddiy linkni bosadi
+      setTimeout(() => {
+        window.open(installUrl, '_system');
+      }, 1000);
     } 
     else {
-      // 3. Desktop yoki boshqalar
-      const link = document.createElement('a');
-      link.href = installUrl;
-      link.target = '_blank'; // Yangi oynada ochish
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // DESKTOP YOKI BOSHQALAR:
+      // _blank - bu PWA rejimida ko'pincha tashqi brauzerni chaqiradi
+      window.open(installUrl, '_blank');
     }
   };
 
