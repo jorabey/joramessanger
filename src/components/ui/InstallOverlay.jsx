@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../config/supabaseClient'; // O'z yo'lingizni tekshiring
+import { supabase } from '../../config/supabaseClient';
 
-// .env fayldan versiyani oqish (Vite uchun)
 const LOCAL_VERSION = import.meta.env.VITE_APP_VERSION || '1.0.0';
 
 const InstallOverlay = () => {
@@ -10,11 +9,9 @@ const InstallOverlay = () => {
   const [installUrl, setInstallUrl] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Semver versiyalarni solishtirish funksiyasi (masalan: "2.0.0" > "1.0.0" => true)
   const isUpdateNeeded = (remote, local) => {
     const rParts = remote.split('.').map(Number);
     const lParts = local.split('.').map(Number);
-    
     for (let i = 0; i < 3; i++) {
       if ((rParts[i] || 0) > (lParts[i] || 0)) return true;
       if ((rParts[i] || 0) < (lParts[i] || 0)) return false;
@@ -23,19 +20,17 @@ const InstallOverlay = () => {
   };
 
   useEffect(() => {
-    // A. Birinchi navbatda 2 soatlik cheklovni tekshiramiz
     const hideUntil = localStorage.getItem('jora_install_hide_until');
     if (hideUntil && Date.now() < Number(hideUntil)) {
       setLoading(false);
-      return; // 2 soat o'tmagan bo'lsa, hech narsani tekshirmay eshikni yopamiz
+      return;
     }
 
-    // B. Agar 2 soat o'tgan bo'lsa (yoki birinchi kirishi bo'lsa), Supabase'dan tekshiramiz
     const checkVersionFromSupabase = async () => {
       try {
         const { data, error } = await supabase
           .from('versions')
-          .select('version, url')
+          .select('version, url') // Bazadagi column nomi 'url' ekanligini hisobga oldim
           .eq('active', true)
           .order('version', { ascending: false })
           .limit(1)
@@ -43,16 +38,13 @@ const InstallOverlay = () => {
 
         if (error) throw error;
 
-        if (data) {
-          // Agar bazadagi versiya (.env) dagi versiyadan katta bo'lsa, overlayni ko'rsatamiz
-          if (isUpdateNeeded(data.version, LOCAL_VERSION)) {
-            setLatestVersion(data.version);
-            setInstallUrl(data.url);
-            setVisible(true);
-          }
+        if (data && isUpdateNeeded(data.version, LOCAL_VERSION)) {
+          setLatestVersion(data.version);
+          setInstallUrl(data.url);
+          setVisible(true);
         }
       } catch (err) {
-        console.error("Versiyani tekshirishda xatolik:", err);
+        console.error("Yangilanishni tekshirishda xatolik:", err);
       } finally {
         setLoading(false);
       }
@@ -62,25 +54,52 @@ const InstallOverlay = () => {
   }, []);
 
   const handleLater = () => {
-    const twoHoursInMs = 2 * 60 * 60 * 1000; // 2 soat millisekundda
+    const twoHoursInMs = 2 * 60 * 60 * 1000;
     const deferTime = Date.now() + twoHoursInMs;
     localStorage.setItem('jora_install_hide_until', deferTime.toString());
     setVisible(false);
   };
 
+  // BU YERDA ASOSIY O'ZGARISH
   const handleInstall = () => {
     if (!installUrl) return;
 
-    const rawUrl = installUrl.replace(/^https?:\/\//, '');
     const isAndroid = /Android/i.test(navigator.userAgent);
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (isAndroid) {
-      window.location.href = `intent://${rawUrl}#Intent;scheme=https;package=com.android.chrome;end`;
-    } else if (isIOS) {
-      window.location.href = `googlechrome://${rawUrl}`;
-    } else {
-      window.open(installUrl, '_blank');
+      // 1. Android uchun Chrome Intent
+      // SIZNING URL: https://example.com/download
+      // INTENT: intent://example.com/download#Intent;scheme=https;package=com.android.chrome;end
+      const urlWithoutProtocol = installUrl.replace(/^https?:\/\//, '');
+      const intentUrl = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;end`;
+      window.location.href = intentUrl;
+    } 
+    else if (isIOS) {
+       // 2. iOS uchun (PWA ichida juda qiyin, lekin bu eng samarali usul)
+       // googlechrome:// sxemasi yordamida ochishga urinish
+       window.location.href = `googlechrome://${installUrl.replace(/^https?:\/\//, '')}`;
+       
+       // Agar Chrome bo'lmasa, 1 soniyadan keyin standart brauzerda ochish
+       setTimeout(() => {
+           const link = document.createElement('a');
+           link.href = installUrl;
+           link.target = '_blank';
+           link.rel = 'noopener noreferrer';
+           document.body.appendChild(link);
+           link.click();
+           document.body.removeChild(link);
+       }, 1000);
+    } 
+    else {
+      // 3. Desktop yoki boshqalar
+      const link = document.createElement('a');
+      link.href = installUrl;
+      link.target = '_blank'; // Yangi oynada ochish
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -88,40 +107,23 @@ const InstallOverlay = () => {
 
   return (
     <div className="fixed inset-0 w-full h-full bg-neutral-50 dark:bg-neutral-950 flex flex-col justify-between p-6 md:p-12 z-[999999] select-none animate-fade-in">
-      <div className="flex-1 flex flex-col items-center justify-center max-w-sm mx-auto text-center mt-12">
-        <div className="w-24 h-24 rounded-[22%] bg-blue-600 flex items-center justify-center text-white font-black text-4xl mb-6 shadow-2xl shadow-blue-500/20 animate-bounce-subtle">
-          <img src="/icon-512.png" alt="Jora" className="w-full h-full rounded-[22%] object-cover" onError={(e) => e.target.style.display = 'none'} />
-          <span className="absolute">J</span>
+        {/* Kontent qismi o'zgarishsiz */}
+        <div className="flex-1 flex flex-col items-center justify-center max-w-sm mx-auto text-center mt-12">
+            <div className="w-24 h-24 rounded-[22%] bg-blue-600 flex items-center justify-center text-white font-black text-4xl mb-6 shadow-2xl shadow-blue-500/20 animate-bounce-subtle">
+                <img src="/icon-512.png" alt="Jora" className="w-full h-full rounded-[22%] object-cover" onError={(e) => e.target.style.display = 'none'} />
+                <span className="absolute">J</span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black text-neutral-900 dark:text-white mb-2 tracking-tight">Jora Messenger</h1>
+            <span className="px-3 py-1 text-[12px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full mb-6">Yangi versiya: {latestVersion}</span>
+            <p className="text-[15px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                Siz eski versiyadan foydalanmoqdasiz (Hozirgi: {LOCAL_VERSION}). Ilovani eng so'nggi imkoniyatlar bilan ishlatish uchun yangilang.
+            </p>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-black text-neutral-900 dark:text-white mb-2 tracking-tight">
-          Jora Messenger
-        </h1>
-
-        <span className="px-3 py-1 text-[12px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full mb-6">
-          Yangi versiya: {latestVersion}
-        </span>
-
-        <p className="text-[15px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
-          Siz eski versiyadan foydalanmoqdasiz (Hozirgi: {LOCAL_VERSION}). Ilovani eng so'nggi imkoniyatlar bilan ishlatish uchun yangilang.
-        </p>
-      </div>
-
-      <div className="w-full max-w-sm mx-auto flex flex-col gap-3 mb-4">
-        <button
-          onClick={handleInstall}
-          className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-[16px] font-bold shadow-lg shadow-blue-600/25 transition-all"
-        >
-          O'rnatish
-        </button>
-
-        <button
-          onClick={handleLater}
-          className="w-full py-4 rounded-2xl bg-neutral-200/50 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 active:scale-[0.98] text-neutral-600 dark:text-neutral-400 text-[15px] font-medium transition-all"
-        >
-          Keyinroq
-        </button>
-      </div>
+        <div className="w-full max-w-sm mx-auto flex flex-col gap-3 mb-4">
+            <button onClick={handleInstall} className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-[16px] font-bold shadow-lg shadow-blue-600/25 transition-all">O'rnatish</button>
+            <button onClick={handleLater} className="w-full py-4 rounded-2xl bg-neutral-200/50 dark:bg-white/5 hover:bg-neutral-200 dark:hover:bg-white/10 active:scale-[0.98] text-neutral-600 dark:text-neutral-400 text-[15px] font-medium transition-all">Keyinroq</button>
+        </div>
     </div>
   );
 };
