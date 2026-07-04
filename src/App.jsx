@@ -13,6 +13,7 @@ const ChatPage = lazy(() => import('./pages/ChatPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 import Loader   from './components/ui/Loader';
 import PasscodeScreen from './components/ui/PasscodeScreen';
+import InstallOverlay from './components/ui/InstallOverlay';
 
 const urlBase64ToUint8Array = (base64String) => {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -309,11 +310,14 @@ const App = () => {
   }, []);
 
   return (
+    <>
+      <InstallOverlay />
     <Suspense fallback={<Loader />}>
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>
     </Suspense>
+    </>
   );
 };
 
