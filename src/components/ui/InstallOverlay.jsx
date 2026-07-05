@@ -20,7 +20,7 @@ const InstallOverlay = () => {
   };
 
   useEffect(() => {
-    const hideUntil = localStorage.getItem('jora_install_hide_until');
+    const hideUntil = sessionStorage.getItem('jora_install_hide_until');
     if (hideUntil && Date.now() < Number(hideUntil)) {
       setLoading(false);
       return;
@@ -56,7 +56,7 @@ const InstallOverlay = () => {
   const handleLater = () => {
     const twoHoursInMs = 2 * 60 * 60 * 1000;
     const deferTime = Date.now() + twoHoursInMs;
-    localStorage.setItem('jora_install_hide_until', deferTime.toString());
+    sessionStorage.setItem('jora_install_hide_until', deferTime.toString());
     setVisible(false);
   };
 
