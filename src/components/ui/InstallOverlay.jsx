@@ -30,7 +30,7 @@ const InstallOverlay = () => {
       try {
         const { data, error } = await supabase
           .from('versions')
-          .select('version, url') // Bazadagi column nomi 'url' ekanligini hisobga oldim
+          .select('version, redirect') // Bazadagi column nomi 'url' ekanligini hisobga oldim
           .eq('active', true)
           .order('version', { ascending: false })
           .limit(1)
@@ -40,7 +40,7 @@ const InstallOverlay = () => {
 
         if (data && isUpdateNeeded(data.version, LOCAL_VERSION)) {
           setLatestVersion(data.version);
-          setInstallUrl(data.url);
+          setInstallUrl(data.redirect);
           setVisible(true);
         }
       } catch (err) {
