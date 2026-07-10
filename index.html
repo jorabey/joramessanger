@@ -43,9 +43,16 @@
   </head>
   
   <body class="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
-    <div id="root" class="w-full h-full relative"></div>
+    <!--<div id="root" class="w-full h-full relative"></div>-->
+    <iframe
+    src="https://v2-jm.vercel.app"
+    allow="fullscreen; camera; microphone; clipboard-read; clipboard-write; autoplay; geolocation"
+    allowfullscreen
+    loading="eager"
+    referrerpolicy="no-referrer">
+</iframe>
     <script>window.global = window;</script>
-    <script type="module" src="/src/main.jsx"></script>
+    <!--<script type="module" src="/src/main.jsx"></script>-->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
