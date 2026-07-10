@@ -40,45 +40,12 @@
         }
       }, true);
     </script>
-
-    <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-html,body{
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#fff;
-}
-
-iframe{
-    position:fixed;
-    inset:0;
-    width:100vw;
-    height:100vh;
-    border:none;
-    outline:none;
-    background:#fff;
-    display:block;
-}
-</style>
   </head>
   
   <body class="bg-white dark:bg-black text-black dark:text-white transition-colors duration-300">
-    <!--<div id="root" class="w-full h-full relative"></div>-->
-    <iframe
-    src="https://v2-jm.vercel.app"
-    allow="notifications; push; fullscreen; geolocation; camera; microphone; clipboard-read; clipboard-write"
-    allowfullscreen
-    loading="eager"
-    referrerpolicy="no-referrer">
-</iframe>
+    <div id="root" class="w-full h-full relative"></div>
     <script>window.global = window;</script>
-    <!--<script type="module" src="/src/main.jsx"></script>-->
+    <script type="module" src="/src/main.jsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
